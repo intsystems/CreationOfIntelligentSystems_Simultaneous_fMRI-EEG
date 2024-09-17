@@ -13,8 +13,8 @@
 |      |      |      |      |      |      |      |
 | Methods using fMRI [@DorinDaniil](https://github.com/DorinDaniil) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |
-| Methods using EEG [@sem-k32](https://github.com/sem-k32) |     |     |     |     |     |     |
-|      |      |      |      |      |      |      |
+| Methods using EEG [@sem-k32](https://github.com/sem-k32) | Visual Decoding and Reconstruction via EEG Embeddings with Guided Diffusion | 2024 | Dongyang Li et al. | [arXiv](https://arxiv.org/abs/2403.07721v5) | [GitHub](https://github.com/dongyangli-del/EEG_Image_decode)  |     |
+|      | NeuroGAN: image reconstruction from EEG signals via an attention-based GAN | 2022 | Rahul Mishra et al. | [Springer Link](https://link.springer.com/article/10.1007/s00521-022-08178-1) | - |  |
 | SOTA fMRI encoders [@DorinDaniil](https://github.com/DorinDaniil) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |
 | SOTA EEG encoders [@sem-k32](https://github.com/sem-k32) |     |     |     |     |     |     |

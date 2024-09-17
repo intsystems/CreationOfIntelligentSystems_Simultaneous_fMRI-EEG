@@ -9,15 +9,19 @@
 
 | Topic | Title | Year | Authors | Paper | Code | Summary |
 | :--- | :--- | ---: | :--- | :--- | :--- | :--- |
-| Datasets with simultaneous fMRI-EEG signals [@kisnikser](https://github.com/kisnikser) |     |     |     |     |     |     |
-|      |      |      |      |      |      |      |
-| Methods using fMRI [@DorinDaniil](https://github.com/DorinDaniil) |     |     |     |     |     |     |
-|      |      |      |      |      |      |      |
-| Methods using EEG [@sem-k32](https://github.com/sem-k32) | Visual Decoding and Reconstruction via EEG Embeddings with Guided Diffusion | 2024 | Dongyang Li et al. | [arXiv](https://arxiv.org/abs/2403.07721v5) | [GitHub](https://github.com/dongyangli-del/EEG_Image_decode)  |     |
+| Datasets with simultaneous fMRI-EEG signals <br> [@kisnikser](https://github.com/kisnikser) | An open-access dataset of naturalistic viewing using simultaneous EEG-fMRI | 2023 | Qawi K. Telesford et al. | [scientific data](https://www.nature.com/articles/s41597-023-02458-8) | [GitHub](https://github.com/NathanKlineInstitute/NATVIEW_EEGFMRI) |     |
+|      | Open multimodal iEEG-fMRI dataset from naturalistic stimulation with a short audiovisual film | 2022 | Julia Berezutskaya et al. | [scientific data](https://www.nature.com/articles/s41597-022-01173-0) | [GitHub #1](https://github.com/UMCU-RIBS/ieeg-fmri-dataset-validation), [GitHub #2](https://github.com/UMCU-RIBS/ieeg-fmri-dataset-quickstart) |      |
+| Methods using fMRI <br> [@DorinDaniil](https://github.com/DorinDaniil) | Natural scene reconstruction from fMRI signals using generative latent diffusion | 2023 | Furkan Ozcelik et al. | [arXiv](https://arxiv.org/abs/2303.05334) | [GitHub](https://github.com/ozcelikfu/brain-diffuser) |     |
+|      | fMRI-based Decoding of Visual Information from Human Brain Activity: A Brief Review | 2021 | Shuo Huang et al. | [Springer Link](https://link.springer.com/article/10.1007/s11633-020-1263-y) | - |      |
+|      | Cinematic Mindscapes: High-quality Video Reconstruction from Brain Activity | 2023 | Zijiao Chen et al. | [arXiv](https://arxiv.org/abs/2305.11675) | - |     |
+|      | High-resolution image reconstruction with latent diffusion models from human brain activity | 2023 | Yu Takagi et al. | [arXiv](https://arxiv.org/abs/2306.11536) | [GitHub](https://github.com/yu-takagi/StableDiffusionReconstruction) |      |
+| Methods using EEG <br> [@sem-k32](https://github.com/sem-k32) | Visual Decoding and Reconstruction via EEG Embeddings with Guided Diffusion | 2024 | Dongyang Li et al. | [arXiv](https://arxiv.org/abs/2403.07721v5) | [GitHub](https://github.com/dongyangli-del/EEG_Image_decode)  |     |
 |      | NeuroGAN: image reconstruction from EEG signals via an attention-based GAN | 2022 | Rahul Mishra et al. | [Springer Link](https://link.springer.com/article/10.1007/s00521-022-08178-1) | - |  |
-| SOTA fMRI encoders [@DorinDaniil](https://github.com/DorinDaniil) |     |     |     |     |     |     |
+|      | EEG2IMAGE: Image Reconstruction from EEG Brain Signals | 2023 | Prajwal Singh et al. | [arXiv](https://arxiv.org/abs/2302.10121) | [GitHub](https://github.com/prajwalsingh/EEG2Image) |      |
+|      | Image Reconstruction from Electroencephalography Using Latent Diffusion | 2024 | Teng Fei et al. | [arXiv](https://arxiv.org/abs/2404.01250) | [GitHub](https://github.com/desa-lab/EEG-Image-Reconstruction) |      |
+| SOTA fMRI encoders <br> [@DorinDaniil](https://github.com/DorinDaniil) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |
-| SOTA EEG encoders [@sem-k32](https://github.com/sem-k32) |     |     |     |     |     |     |
+| SOTA EEG encoders <br> [@sem-k32](https://github.com/sem-k32) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |
-| SOTA methods for image generation [@kisnikser](https://github.com/kisnikser) |     |     |     |     |     |     |
+| SOTA methods for image generation <br> [@kisnikser](https://github.com/kisnikser) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |

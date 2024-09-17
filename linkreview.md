@@ -4,6 +4,9 @@
 - We divide these works by topic in order to structure them
 - Each of the contributors is responsible for their part of the work, as specified in the table
 
+> [!NOTE]
+> This review table will be updated, so it is not a final version
+
 | Topic | Title | Year | Authors | Paper | Code | Summary |
 | :--- | :--- | ---: | :--- | :--- | :--- | :--- |
 | Datasets with simultaneous fMRI-EEG signals [@kisnikser](https://github.com/kisnikser) |     |     |     |     |     |     |

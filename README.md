@@ -11,11 +11,11 @@
     </tr>
     <tr>
         <td align="left"> <b> Advisor </b> </td>
-        <td> Vadim Strijov, D.Sc. </td>
+        <td> Vadim Strijov, DSc </td>
     </tr>
     <tr>
         <td align="left"> <b> Consultant </b> </td>
-        <td> Andrey Grabovoy, Ph.D. </td>
+        <td> Andrey Grabovoy, PhD </td>
     </tr>
 </table>
 

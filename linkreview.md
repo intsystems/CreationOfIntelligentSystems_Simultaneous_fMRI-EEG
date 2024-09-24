@@ -21,9 +21,11 @@
 |      | NeuroGAN: image reconstruction from EEG signals via an attention-based GAN | 2022 | Rahul Mishra et al. | [Springer Link](https://link.springer.com/article/10.1007/s00521-022-08178-1) | - | CNN encoder for EEG incorporated into GAN's generator. $$ Loss = Loss_{\text{GAN}} + Loss_{\text{image classification}} + Loss_{\text{perceptial loss}} $$ |
 |      | EEG2IMAGE: Image Reconstruction from EEG Brain Signals | 2023 | Prajwal Singh et al. | [arXiv](https://arxiv.org/abs/2302.10121) | [GitHub](https://github.com/prajwalsingh/EEG2Image) | Individual EEG feature extractor (LSTM, constastive learning) + conditioned GAN for image generation |
 |      | Image Reconstruction from Electroencephalography Using Latent Diffusion | 2024 | Teng Fei et al. | [arXiv](https://arxiv.org/abs/2404.01250) | [GitHub](https://github.com/desa-lab/EEG-Image-Reconstruction) |   info-gypsy   |
+|      | Image classification and reconstruction from low‑density EEG | 2024 | Sven Guenther et. al. | [Nature Reports](https://www.nature.com/articles/s41598-024-66228-1.pdf) |  |   compare diffrent EEG-encoders for classification/reconstruction (diffusion conditioning) tasks   |
 | SOTA fMRI encoders <br> [@DorinDaniil](https://github.com/DorinDaniil) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |
 | SOTA EEG encoders <br> [@sem-k32](https://github.com/sem-k32) |     |     |     |     |     |     |
-|      |      |      |      |      |      |      |
+|      |   EEGNet: a compact convolutional neural network for EEG-based brain–computer interfaces   |   2018   |   Vernon J Lawhern et. al.   |   [IOPScience](https://iopscience.iop.org/article/10.1088/1741-2552/aace8c)   |   -  |   CNN-model with decoupled time and space convolutions   |
+|      |   TSception:A Deep Learning Framework for Emotion Detection Using EEG   |   2020   |   Yi Ding et. al.   |   [IEEE](https://ieeexplore.ieee.org/document/9206750)   |      |   another CNN-model   |
 | SOTA methods for image generation <br> [@kisnikser](https://github.com/kisnikser) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |

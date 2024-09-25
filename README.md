@@ -29,3 +29,4 @@ The study investigates the task of reconstructing visual stimuli from simultaneo
 
 ## 🔗 Useful links
 - [Brain Imaging Data Structure (BIDS) Starter Kit](https://bids-standard.github.io/bids-starter-kit/index.html)
+- [OpenNeuroDatasets](https://github.com/OpenNeuroDatasets)

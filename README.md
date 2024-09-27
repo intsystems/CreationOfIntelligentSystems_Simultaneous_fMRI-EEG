@@ -7,7 +7,7 @@
     </tr>
     <tr>
         <td align="left"> <b> Authors </b> </td>
-        <td> Daniil Dorin, Nikita Kiselev, Kirill Semkin </td>
+        <td> Daniil Dorin, Nikita Kiselev, Ernest Nasyrov, Kirill Semkin </td>
     </tr>
     <tr>
         <td align="left"> <b> Advisor </b> </td>

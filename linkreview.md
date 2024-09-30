@@ -30,5 +30,5 @@
 | SOTA EEG encoders <br> [@sem-k32](https://github.com/sem-k32) |     |     |     |     |     |     |
 |      |   EEGNet: a compact convolutional neural network for EEG-based brain–computer interfaces   |   2018   |   Vernon J Lawhern et. al.   |   [IOPScience](https://iopscience.iop.org/article/10.1088/1741-2552/aace8c)   |   -  |   CNN-model with decoupled time and space convolutions   |
 |      |   TSception:A Deep Learning Framework for Emotion Detection Using EEG   |   2020   |   Yi Ding et. al.   |   [IEEE](https://ieeexplore.ieee.org/document/9206750)   |      |   another CNN-model   |
-| SOTA methods for image generation <br> [@kisnikser](https://github.com/kisnikser) |     |     |     |     |     |     |
+| SOTA methods for image generation <br> [@2001092236](https://github.com/2001092236) |     |     |     |     |     |     |
 |      |      |      |      |      |      |      |

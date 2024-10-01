@@ -38,6 +38,6 @@
 |      |   Efficient-VDVAE: Less is more   | 2022  | Louay Hazami et. al. | [arXiv](https://arxiv.org/abs/2203.13751)    |  [github](https://github.com/Rayhane-mamah/Efficient-VDVAE)    | (about VDVAE): uses hierarchical VAE (very deep), no latent space collapse.  Train weights available (see github) |
 |     | VQGAN-CLIP |    2022 |   Katherine Crowson et. al.    |  [arXiv](https://arxiv.org/abs/2204.08583)     |   [GitHub](https://github.com/nerdyrodent/VQGAN-CLIP)   |   VQGAN generates images, CLIP assesses how well images aligned with text prompts   |
 |     | VQGAN      |   2020  |  Patric Esser et. al.     | [arXiv](https://arxiv.org/abs/2012.09841) | [GitHub](https://github.com/CompVis/taming-transformers) | CNN for encoding into discrete codebook, transformer for generation of tokens, CNN for decoding from generated tokens. Allows conditional generation.|
-| StyleGAN2 (Analyzing and Improving the Image Quality of StyleGAN) |      |      |      |      |      |      |
-|DiffiT (Diffusion Vision Transformers)      |      |      |      |      |      | |
+|     | StyleGAN2 (Analyzing and Improving the Image Quality of StyleGAN) | 2020    | Tero Karras et. al.    |  [arXiv](https://arxiv.org/abs/1912.04958)    |  [GitHub](https://github.com/NVlabs/stylegan2)    |      |
+| |DiffiT (Diffusion Vision Transformers)      |  2023     |   [arXiv](https://arxiv.org/abs/2312.02139)   | [GitHub](https://github.com/NVlabs/DiffiT)     |      | |
 

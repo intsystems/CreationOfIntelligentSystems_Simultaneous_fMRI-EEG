@@ -34,6 +34,7 @@
 |      |   TSception:A Deep Learning Framework for Emotion Detection Using EEG   |   2020   |   Yi Ding et. al.   |   [IEEE](https://ieeexplore.ieee.org/document/9206750)   |      |   another CNN-model   |
 | SOTA methods for image generation <br> [@2001092236](https://github.com/2001092236) |     |     |     |     |     |     |
 |      |  Versatile Diffusion: Text, Images and Variations All in One Diffusion Model    |   2024   | Xingqian Xl et. al.     |   [arxiv](https://arxiv.org/pdf/2211.08332)   |  [github](https://github.com/SHI-Labs/Versatile-Diffusion)    |    based on image and/or text generates image and text. Uses VAE (input->latent), context encoders (different input modalities into one embedding space) and Diffusion Model|
-|      |      |      |      |      |      |      |
-|      |      |      |      |      |      |      |
+|      |    High-resolution image reconstruction with latent diffusion models from human brain activity	  |      |      |      |      |      |
+|      |   Efficient-VDVAE: Less is more   |      |      |      |      |    CLIP for encoding text, LDM for conditional generation. They train encoder (Image+Text->fMRI) and decoder (fMRI->image). Use freezed NNs. Models: LDM, CLIP |
+
 |      |      |      |      |      |      |      |

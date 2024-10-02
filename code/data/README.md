@@ -61,24 +61,11 @@ conda activate visual_stimuli
                     "chunks": {
                         "0": {"fmri": {"idx": 2}, "eeg": {"start_idx": 0, "end_idx": 524}, "frames": {"start_idx": 0, "end_idx": 5}},
                         "1": {"fmri": { "idx": 3}, "eeg": {"start_idx": 525, "end_idx": 1049}, "frames": { "start_idx": 6, "end_idx": 11}},
-                        ...
                     }
                 },
-                "run-02": ...,
-                ...
             },
-            "ses-02": ...,
-            ...
         },
-        "sub-02": ...,
-        ...
     },
-    "dmh": ...,
-    "inscapes": ...,
-    "monkey1": ...,
-    "monkey2": ...,
-    "monkey5": ...,
-    "tp": ...
     }
     ```
 4. When the `dataset.json` file was created, you can initialize the custom `Dataset`, inherited from the `torch.utils.data.Dataset`, and then loop over the corresponding `DataLoader`. To do it, run the cells in the `dataset.ipynb` notebook.

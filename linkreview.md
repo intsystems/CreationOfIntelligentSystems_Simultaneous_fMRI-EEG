@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/42a34974-04bd-48e2-8bbc-2a453df74ec2)# LinkReview
+# LinkReview
 
 - Here we have collect info about all the works that may be useful for writing our paper
 - We divide these works by topic in order to structure them

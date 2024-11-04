@@ -1,4 +1,5 @@
 from typing import Union, Callable, Optional
+import math
 
 import numpy as np
 import torch
@@ -21,7 +22,7 @@ class SpatioChannelConv(nn.Module):
 
         self.time_conv = nn.Sequential(
             nn.Conv2d(1, output_dim // 2, (1 ,kernal_size), (1, stride)),
-            nn.AvgPool2d(output_dim // 2, output_dim // 2, (1 ,kernal_size), (1, stride))
+            nn.AvgPool2d((1 ,kernal_size), (1, stride))
         )
 
         self.channel_conv = nn.Sequential(
@@ -39,7 +40,7 @@ class SpatioChannelConv(nn.Module):
         # apply time convolutions
         x = self.time_conv(x)
         # average the remained time dimension
-        x = torch.mean(x, dim=3)
+        x = torch.mean(x, dim=3, keepdim=True)
         # apply channel convolutions
         x = self.channel_conv(x)
         # flatten the output so it becomes a vector
@@ -53,8 +54,10 @@ class SpatioChannelConv(nn.Module):
              with given kernal_size
         """
         # the result is a root of the quadratic equation
-        discriminant = (kernal_size - 1) ** 2 - 4 * (kernal_size - 1 - input)
-        return (1 - kernal_size + np.sqrt(discriminant)) // 2
+        discriminant = (kernal_size - 1) ** 2 - 4 * (kernal_size - 1 - input_length)
+        return int(
+            (1 - kernal_size + math.sqrt(discriminant)) / 2
+        )
 
 class ResidualMLPProjector(nn.Module):
     def __init__(
@@ -89,7 +92,7 @@ class EEG_Encoder(nn.Module):
             conv_kernal_size: int = 50,
             transformer_num_layers: int = 1,
             transformer_dim_feedforward: int = 2048,
-            transformer_nhead: int = 8,
+            transformer_nhead: int = 1,
             transformer_dropout: float = 0.1,
             transformer_activation: Union[str, Callable[[torch.Tensor], torch.Tensor]] = "relu"
     ):
@@ -99,9 +102,17 @@ class EEG_Encoder(nn.Module):
         self.num_channels = num_channels
         self.participants_embedding = participants_embedding
 
-        self.transformer_stack = nn.Sequential(
-            *[nn.TransformerEncoderLayer for _ in range(transformer_num_layers)]
-        )
+        self.transformer_stack = nn.Sequential(*[
+            nn.TransformerEncoderLayer(
+                input_length,
+                transformer_nhead,
+                transformer_dim_feedforward,
+                transformer_dropout,
+                transformer_activation,
+                batch_first=True
+            )
+            for _ in range(transformer_num_layers)
+        ])
 
         self.conv_module = SpatioChannelConv(
             input_length,

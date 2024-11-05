@@ -1,3 +1,5 @@
+""" eeg encoder configs for tests
+"""
 import torch
 from torch import nn
 

@@ -58,8 +58,9 @@ class SpatioChannelConv(nn.Module):
         return int(
             (1 - kernal_size + math.sqrt(discriminant)) / 2
         )
+    
 
-class ResidualMLPProjector(nn.Module):
+class ResidualMlpProjector(nn.Module):
     def __init__(
             self,
             input_dim: int,
@@ -80,6 +81,7 @@ class ResidualMLPProjector(nn.Module):
         x = x + self.residual_layers(x)
         x = self.norm_layer(x)
         return x
+    
 
 class EEG_Encoder(nn.Module):
     def __init__(
@@ -121,7 +123,7 @@ class EEG_Encoder(nn.Module):
             conv_kernal_size
         )
 
-        self.projector = ResidualMLPProjector(
+        self.projector = ResidualMlpProjector(
             conv_output_dim,
             output_dim
         )
@@ -159,6 +161,10 @@ class EEG_Encoder(nn.Module):
             )
 
         x = self.transformer_stack(x)
+        # leave participant's embedding if it exists
+        if self.participants_embedding:
+            x = x[:, 1:, :]
+
         x = self.conv_module(x)
         x = self.projector(x)
 

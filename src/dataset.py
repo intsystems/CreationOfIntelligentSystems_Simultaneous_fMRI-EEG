@@ -154,7 +154,7 @@ def collate_fn(data):
         'frames': frames_tensor
     }
 
-def build_dataloaders(train_ratio: float = 0.9, batch_size: int) -> tuple[DataLoader]:
+def build_dataloaders(dataset_json: str, batch_size: int, train_ratio: float = 0.9) -> tuple[DataLoader]:
     """ Builds train/validate dataloaders for (eeg, fmri, imgs) triplets
 
     Args:
@@ -163,7 +163,7 @@ def build_dataloaders(train_ratio: float = 0.9, batch_size: int) -> tuple[DataLo
     Returns:
         tuple[DataLoader]: train/validate dataloaders
     """
-    dataset = BrainStimuliDataset('dataset.json')
+    dataset = BrainStimuliDataset(dataset_json)
     train_dataset, val_dataset = random_split(dataset, [0.9, 0.1])
 
     train_dataloader = DataLoader(train_dataset, batch_size, shuffle=True, collate_fn=collate_fn)

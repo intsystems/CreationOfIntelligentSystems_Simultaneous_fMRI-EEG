@@ -29,7 +29,6 @@ class SpatioChannelConv(nn.Module):
             nn.BatchNorm2d(output_dim // 2),
             nn.ELU(),
             nn.Conv2d(output_dim // 2, output_dim, (num_channels, 1)),
-            nn.BatchNorm2d(output_dim),
             nn.ELU(),
             nn.Dropout(0.5),
         )
@@ -90,7 +89,7 @@ class EEG_Encoder(nn.Module):
             num_channels: int,
             output_dim: int = 1024,
             participants_embedding: nn.Embedding = None,
-            conv_output_dim: int = 1024,
+            conv_output_dim: int = 512,
             conv_kernal_size: int = 50,
             transformer_num_layers: int = 1,
             transformer_dim_feedforward: int = 2048,

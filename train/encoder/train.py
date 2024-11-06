@@ -30,7 +30,11 @@ writer = SummaryWriter(writer_log_dir)
 device = torch.device(config["device"])
 
 # build dataloaders
-train_dataloader, test_dataloader = build_dataloaders(config["train_data_ratio"], config["batch_size"])
+train_dataloader, test_dataloader = build_dataloaders(
+    config["dataset_json"],
+    config["batch_size"], 
+    config["train_data_ratio"]
+)
 
 # create encoder
 eeg_encoder = EEG_Encoder(**config["eeg_encoder"]).to(device)
@@ -39,7 +43,7 @@ eeg_encoder = EEG_Encoder(**config["eeg_encoder"]).to(device)
 clip_vision = CLIPVisionModelWithProjection.from_pretrained("openai/clip-vit-base-patch32").to(device)
 
 # define optimizer
-optimizer = get_optimizer(eeg_encoder.parameters())
+optimizer = get_optimizer(eeg_encoder)
 
 # counter for overall step in training process
 global_step = 0
@@ -55,9 +59,12 @@ for epoch in tqdm(range(config["num_epochs"]), desc="Epoch"):
 
         # get mean CLIP embedding out of given frames
         num_frames = imgs.shape[1]
-        clip_emb = sum(
-            [clip_vision(imgs[:, frame_num, ...]) / num_frames for frame_num in range(num_frames)]
-        )
+        frames_embeds = []
+        for frame_num in range(num_frames):
+            frames_embeds.append(
+                clip_vision(imgs[:, frame_num, ...]).image_embeds / num_frames
+            )
+        clip_emb = sum(frames_embeds)
 
         model_emb = eeg_encoder(eeg_signal)
         loss = F.mse_loss(model_emb, clip_emb)
@@ -76,9 +83,13 @@ for epoch in tqdm(range(config["num_epochs"]), desc="Epoch"):
             imgs = batch["frames"].to(device)
 
             # get mean CLIP embedding out of given frames
-            clip_emb = sum(
-                [clip_vision(imgs[:, frame_num, ...]) / imgs.shape[1] for frame_num in range(imgs.shape[1])]
-            )
+            num_frames = imgs.shape[1]
+            frames_embeds = []
+            for frame_num in range(num_frames):
+                frames_embeds.append(
+                    clip_vision(imgs[:, frame_num, ...]).image_embeds / num_frames
+                )
+            clip_emb = sum(frames_embeds)
 
             model_emb = eeg_encoder(eeg_signal)
             loss = F.mse_loss(model_emb, clip_emb)

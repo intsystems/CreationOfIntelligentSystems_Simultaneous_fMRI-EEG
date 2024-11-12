@@ -8,8 +8,8 @@ class DiffusionPriorUNet(nn.Module):
 
     def __init__(
             self, 
-            embed_dim=1024, # CLIP-ViT-H-14 embedding dim 
-            cond_dim=42,
+            embed_dim=1024, # CLIP-ViT-H-14 image embedding dim 
+            cond_dim=1024, # combined embedding dim
             hidden_dim=[1024, 512, 256, 128, 64],
             time_embed_dim=512,
             act_fn=nn.SiLU,

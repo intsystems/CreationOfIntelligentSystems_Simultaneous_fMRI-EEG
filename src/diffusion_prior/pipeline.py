@@ -69,8 +69,8 @@ class DiffusionPrior:
                 optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.diffusion_prior.parameters(), 1.0)
-                lr_scheduler.step()
                 optimizer.step()
+                lr_scheduler.step()
 
                 loss_sum += loss.item()
 

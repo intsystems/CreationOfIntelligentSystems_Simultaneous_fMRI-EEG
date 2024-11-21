@@ -164,3 +164,7 @@ cython_debug/
 
 # pytest technical
 conftest.py
+
+# Data
+natview
+dataset.json

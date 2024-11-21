@@ -84,7 +84,7 @@ if __name__ == '__main__':
         data_dict[key]['frames_dir'] = frames_dir
         # loop for path to the fmri image
         for nifti_path in key2paths[key]:
-            eeglab_path = '/' + os.path.join(*nifti_path.split('/')[:-2]).replace('func', 'eeg').replace('bold', 'eeg') + '.set'
+            eeglab_path = os.path.join(*nifti_path.split('/')[:-2]).replace('func', 'eeg').replace('bold', 'eeg') + '.set'
             divided_str = nifti_path[nifti_path.rfind('func/') + len('func/'):].split('/')[0].split('_')
             if len(divided_str) == 4:
                 sub_str, ses_str = divided_str[:2]

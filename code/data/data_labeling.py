@@ -1,6 +1,7 @@
 import nibabel as nib
 from mne.io import read_raw_eeglab
 import os
+import re
 import pandas as pd
 import glob
 from collections import Counter
@@ -49,11 +50,11 @@ def chunk_idx_to_frames_time_indices(chunk_idx, fmri_tr=2.1, video_fps=3):
 
 if __name__ == '__main__':
 
-    root = './natview/data'
+    main_root = os.getcwd()
+    root = 'natview/data'
     stimuli_dir = os.path.join(root, 'stimuli')
     filtered_paths = glob.glob(os.path.join(root, '*/*/func/*/func_preproc/func_pp_filter_gsr_sm0.mni152.3mm.nii.gz'))
     # filtered_paths = glob.glob(os.path.join(root, '*/*/func/*/func_preproc/func_pp_filter_sm0.mni152.3mm.nii.gz'))
-
     videoname2key = {
         'Despicable Me (English)': 'dme',
         'Despicable Me (Hungarian)': 'dmh',
@@ -68,6 +69,30 @@ if __name__ == '__main__':
     key2paths = {}
     for key in key2videoname.keys():
         key2paths[key] = sorted(list(filter(lambda x: key in x, filtered_paths)))
+
+    # Populate key2paths dictionary
+    for key in key2videoname.keys():
+        key2paths[key] = sorted(list(filter(lambda x: key in x, filtered_paths)))
+
+    # Create the sub_num2paths dictionary
+    sub_num2paths = {}
+
+    # Regular expression to extract sub-num from the path
+    sub_num_pattern = re.compile(r'sub-(\d+)')
+
+    # Populate sub_num2paths dictionary
+    for path in filtered_paths:
+        match = sub_num_pattern.search(path)
+        if match:
+            sub_num = match.group(1)
+            if sub_num not in sub_num2paths:
+                sub_num2paths[sub_num] = []
+            sub_num2paths[sub_num].append(path)
+
+    # Save the dictionary to a JSON file
+    output_file = 'sub2fmripaths.json'
+    with open(output_file, 'w') as json_file:
+        json.dump(sub_num2paths, json_file, indent=4)
         
     # key -> 1) frames_dir, 2) sub
     # sub -> ses -> run
@@ -81,7 +106,7 @@ if __name__ == '__main__':
     for key in tqdm(key2paths.keys()):
         # frames directory
         frames_dir = os.path.join(stimuli_dir, key)
-        data_dict[key]['frames_dir'] = frames_dir
+        data_dict[key]['frames_dir'] = os.path.join(main_root, frames_dir)
         # loop for path to the fmri image
         for nifti_path in key2paths[key]:
             eeglab_path = os.path.join(*nifti_path.split('/')[:-2]).replace('func', 'eeg').replace('bold', 'eeg') + '.set'
@@ -109,9 +134,9 @@ if __name__ == '__main__':
             # print('num_frames_chunks:', num_frames_chunks)
             # print('num_chunks:', num_chunks)
             # fmri
-            data_dict[key][sub_str][ses_str][run_str]['nifti_path'] = nifti_path
+            data_dict[key][sub_str][ses_str][run_str]['nifti_path'] = os.path.join(main_root, nifti_path)
             # eeg
-            data_dict[key][sub_str][ses_str][run_str]['eeglab_path'] = eeglab_path
+            data_dict[key][sub_str][ses_str][run_str]['eeglab_path'] = os.path.join(main_root, eeglab_path)
             for chunk_idx in range(num_chunks):
                 # fmri
                 data_dict[key][sub_str][ses_str][run_str]['chunks'][chunk_idx]['fmri']['idx'] = chunk_idx_to_fmri_index(chunk_idx, SKIPPED_FMRI_IMAGES)

@@ -168,3 +168,4 @@ conftest.py
 # Data
 natview
 dataset.json
+sub2fmripaths.json

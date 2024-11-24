@@ -21,11 +21,6 @@ class BrainStimuliDataset(Dataset):
         self.frame_size = frame_size
         self.data_dict = self.load_json_data(json_path)
         self.calculate_length()
-        self.transform = transforms.Compose([
-            transforms.Resize((frame_size, frame_size)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.5], [0.5]),
-        ])
         # union of all the available channels in EEG experiments
         self.eeg_channels_ordered = [
             'AF3', 'AF4', 'AF7', 'AF8', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 
@@ -51,7 +46,12 @@ class BrainStimuliDataset(Dataset):
         fmri_list = []
         eeg_list = []
         frames_list = []
+        id_list = []
         for data in data_list:
+            # sub id
+            _, sep, after = data['nifti_path'].partition('natview')
+            id = int((sep + after).split('/')[3].split('-')[1])
+            id_list.append(id)
             # fmri
             nii_img = nib.load(data['nifti_path'])
             fmri_data = nii_img.get_fdata()
@@ -63,10 +63,12 @@ class BrainStimuliDataset(Dataset):
             eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
             eeg_list.append(torch.from_numpy(eeg).to(dtype=torch.float))
             # frames
-            frames_paths = os.listdir(data['frames_dir'])[data['time_indices']['frames']['start_idx']:data['time_indices']['frames']['end_idx']+1]
-            frames = list(map(lambda x: Image.open(os.path.join(data['frames_dir'], x)), frames_paths))
-            frames_list.append(torch.stack([self.transform(frame) for frame in frames]))
+            frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in 
+                           range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]
+            frames = list(map(lambda x: torch.load(os.path.join(data['frames_dir'], x), map_location="cuda"), frames_paths))
+            frames_list.append(torch.stack(frames))
         # stack tensors
+        id_tensor = torch.tensor(id_list)
         fmri_tensor = torch.stack(fmri_list)
         eeg_tensor = torch.stack(eeg_list)
         frames_tensor = torch.stack(frames_list)
@@ -76,6 +78,7 @@ class BrainStimuliDataset(Dataset):
             eeg_tensor = eeg_tensor.squeeze(0)
             frames_tensor = frames_tensor.squeeze(0)
         return {
+            'id': id_tensor,
             'fmri': fmri_tensor,
             'eeg': eeg_tensor,
             'frames': frames_tensor
@@ -141,21 +144,24 @@ class BrainStimuliDataset(Dataset):
 
 def collate_fn(data):
     # get values
+    id_list = [x['id'] for x in data]
     fmri_list = [x['fmri'] for x in data]
     eeg_list = [x['eeg'] for x in data]
     frames_list = [x['frames'] for x in data]
     # stack tensors
+    id_tensor = torch.tensor(id_list)
     fmri_tensor = torch.stack(fmri_list)
     eeg_tensor = torch.stack(eeg_list)
     frames_tensor = torch.stack(frames_list)
     return {
+        'id': id_tensor,
         'fmri': fmri_tensor,
         'eeg': eeg_tensor, 
         'frames': frames_tensor
     }
 
 def build_dataloaders(dataset_json: str, batch_size: int, train_ratio: float = 0.9) -> tuple[DataLoader]:
-    """ Builds train/validate dataloaders for (eeg, fmri, imgs) triplets
+    """ Builds train/validate dataloaders for (id, eeg, fmri, imgs) triplets
 
     Args:
         train_ratio (float): data ratio for tran, should be in (0., 1.)

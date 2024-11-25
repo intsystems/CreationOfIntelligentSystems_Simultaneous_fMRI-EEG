@@ -12,8 +12,9 @@ This repository contains the files to
 
 This document is structured as follows:
 
-1. [Installation](#installation)
-2. [Usage](#usage)
+- [Data](#data)
+  - [Installation ](#installation-)
+  - [Usage ](#usage-)
 
 ## Installation <a name="installation"></a>
 
@@ -48,7 +49,7 @@ conda activate visual_stimuli
     This script will download necessary data files: the dataset with simultaneous fMRI-EEG and visual stimuli that include multiple videos.
     The directory `.natview/data` will be created, in which the files for each `sub` will be downloaded, as the `stimuli` directory, containing the videos in `.avi` format.
 2. If you wish, you can run the cells in the `data_visualization.ipynb` notebook. There you can see the fMRI and EEG samples from the downloaded dataset.
-3. Further, run the `data_labeling.py`. It creates the `dataset.json` file containing the data paths. Here we provide an example of its structure. 
+3. Further, first run `video2imgs.py` to create images dataset from video and then run the `data_labeling.py`. It creates the `dataset.json` file containing the data paths. Here we provide an example of its structure. 
    - First key `dme` refers to the video stimuli name key (`dme` means `Despicable me, English version`). 
    - For each video stimuli we have created its own directory (see `load_natview_data.sh` source file), which correponds to the `frames_dir` key. 
    - In the dataset, there is data for many participants named `sub-01`, `sub-02`, ..., `sub-22`, connected with the same key name. 

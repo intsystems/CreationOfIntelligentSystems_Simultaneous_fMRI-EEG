@@ -33,7 +33,7 @@ def test_encoder_shapes(model_config_setup):
     """
     config: dict = model_config_setup
 
-    net = EEG_Encoder(**config)
+    net = EEGEncoder(**config)
 
     model_input = torch.rand((2, config["num_channels"], config["input_length"]))
     model_output = net(model_input)
@@ -44,7 +44,7 @@ def test_encoder_grads(model_config_setup):
     """
     config: dict = model_config_setup
 
-    net = EEG_Encoder(**config)
+    net = EEGEncoder(**config)
 
     model_input = torch.rand((2, config["num_channels"], config["input_length"]))
     model_output = net(model_input)

@@ -25,7 +25,7 @@ class ImageDataset(Dataset):
         return image, image_path
 
 def main():
-    json_path = '/home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/dataset.json'
+    json_path = 'dataset.json'
     with open(json_path, "r") as file:
         data_dict = json.load(file)
 

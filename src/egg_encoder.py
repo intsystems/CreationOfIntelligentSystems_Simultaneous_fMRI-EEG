@@ -82,7 +82,7 @@ class ResidualMlpProjector(nn.Module):
         return x
     
 
-class EEG_Encoder(nn.Module):
+class EEGEncoder(nn.Module):
     def __init__(
             self,
             input_length: int,

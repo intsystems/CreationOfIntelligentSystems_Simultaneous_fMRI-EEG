@@ -1,0 +1,13 @@
+wandb_api_key: ec40053455ec5c12dea7d32134b9a23ac16f062e
+experiment_name: Simultaneous fMRI-EEG
+
+output_dir: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train/test
+gradient_accumulation_steps: 1
+mixed_precision: bf16
+log_with: wandb
+scheduler_name: constant
+warmup_steps: 1000
+max_train_epochs: 1
+resume_from_checkpoint: latest
+max_train_steps: 1000
+checkpointing_steps: 100

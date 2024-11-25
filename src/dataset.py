@@ -176,3 +176,17 @@ def build_dataloaders(dataset_json: str, batch_size: int, train_ratio: float = 0
     val_dataloader = DataLoader(val_dataset, batch_size, shuffle=False, collate_fn=collate_fn)
 
     return train_dataloader, val_dataloader
+
+
+def select_random_dimension(batch):
+    """
+    Selects a random dimension for each object in the batch and returns a batch of size (batch_size, 1024).
+
+    :param batch: Tensor of shape (batch_size, num_dimensions, 1024)
+    :return: Tensor of shape (batch_size, 1024)
+    """
+    batch_size, num_dimensions, _ = batch.size()
+    # Generate random indices for each object in the batch
+    random_indices = torch.randint(0, num_dimensions, (batch_size,))
+    # Use the random indices to select the corresponding dimensions
+    return batch[torch.arange(batch_size), random_indices]

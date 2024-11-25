@@ -84,10 +84,10 @@ if __name__ == '__main__':
     for path in filtered_paths:
         match = sub_num_pattern.search(path)
         if match:
-            sub_num = match.group(1)
+            sub_num = f"sub-{match.group(1)}"
             if sub_num not in sub_num2paths:
                 sub_num2paths[sub_num] = []
-            sub_num2paths[sub_num].append(path)
+            sub_num2paths[sub_num].append(os.path.join(main_root, path))
 
     # Save the dictionary to a JSON file
     output_file = 'sub2fmripaths.json'

@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import colors
-import torch
-from skimage import morphology, filters
 
 def show_slices(slices):
     _, axes = plt.subplots(1, len(slices))
@@ -45,19 +43,3 @@ def show_slices_with_mask(fmri_tensor, mask_tensor):
             axes[i].axis('off')
 
     plt.show()
-
-
-def get_thresholded_change_mask(X, threshold_method=filters.threshold_otsu):
-    # Calculate the absolute changes in voxels over the time series
-    absolute_changes = torch.abs(X[..., 1:] - X[..., :-1])
-    summed_changes = torch.sum(absolute_changes, dim=-1)
-    summed_changes = (summed_changes - summed_changes.min()) / (summed_changes.max() - summed_changes.min())
-    summed_changes_np = summed_changes.numpy()
-    # Apply Otsu's method to automatically select the threshold
-    threshold = threshold_method(summed_changes_np)
-    binary_mask = summed_changes_np > threshold
-    # Apply morphological operations to remove noise and fill holes in the mask
-    brain_mask = morphology.binary_closing(binary_mask, morphology.ball(2))
-    brain_mask = morphology.binary_opening(brain_mask, morphology.ball(2)).astype(np.int8)
-
-    return torch.tensor(brain_mask)

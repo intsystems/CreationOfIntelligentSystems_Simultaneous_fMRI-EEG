@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import os
+import re
 
 class PatchEmbed1D(nn.Module):
     def __init__(self, latent_dim=4096, patch_size=16, in_chans=1, embed_dim=1024):
@@ -85,27 +87,88 @@ class fMRIEncoder(nn.Module):
     
 
 class RidgeRegression(nn.Module):
-    def __init__(self, input_sizes, out_features):
-        super(RidgeRegression, self).__init__()
-        self.out_features = out_features
+    def __init__(self, masks_path, out_dim):
+        super().__init__()
+        self.out_dim = out_dim
+        self.masks = self.load_masks_from_directory(masks_path)
+
+        input_sizes = [int(torch.sum(mask)) for mask in self.masks]
         self.linears = nn.ModuleList([
-            nn.Linear(input_size, out_features) for input_size in input_sizes
+            nn.Linear(input_size, out_dim) for input_size in input_sizes
         ])
 
-    def forward(self, x, subj_idx):
-        # x is a list of tensors, each tensor corresponds to a different subject
-        # subj_idx is a tensor of subject indices
-        outputs = []
-        for i, linear in enumerate(self.linears):
-            if i in subj_idx:
-                # Find the index of the subject in the batch
-                batch_idx = (subj_idx == i).nonzero(as_tuple=True)[0]
-                # Apply the corresponding linear layer
-                out = linear(x[batch_idx])
-                outputs.append(out)
+    def load_masks_from_directory(self, directory_path):
+        """
+        Loads all mask files from the given directory and combines them into a single tensor.
 
+        :param directory_path: Path to the directory containing mask files
+        :return: Tensor containing all masks
+        """
+        masks = []
+        files = sorted(os.listdir(directory_path), key=lambda x: int(re.search(r'sub-(\d+)\.pth', x).group(1)))
+        # Iterate over the files and load the masks
+        for file_name in files:
+            if file_name.startswith("sub-") and file_name.endswith(".pth"):
+                file_path = os.path.join(directory_path, file_name)
+                mask = torch.load(file_path)
+                masks.append(mask)
+        masks_tensor = torch.stack(masks)
+
+        return masks_tensor
+
+    def apply_mask_and_flatten(self, fmri_batch, mask):
+        """
+        Applies a mask to a batch of FMRI tensors and returns a batch of vectors.
+
+        :param fmri_batch: Tensor of shape (batch_size, depth, height, width)
+        :param mask: Tensor of shape (depth, height, width) with values 0 and 1
+        :return: Tensor of shape (batch_size, num_masked_voxels)
+        """
+        # Flatten the tensor and keep only the active voxels
+        flattened_batch = fmri_batch.reshape(fmri_batch.size(0), -1)  # Reshape to (batch_size, depth * height * width)
+        # Keep only the active voxels
+        active_voxels = flattened_batch[:, mask.view(-1) == 1]
+
+        return active_voxels
+
+    def generate_sub_batches(self, id_batch, fmri_batch):
+        """
+        Generates sub-batches for each unique ID in the id_batch.
+
+        :param fmri_batch: Tensor of shape (batch_size, depth, height, width)
+        :param id_batch: Tensor of shape (batch_size,) containing IDs
+        :return: Dictionary with IDs as keys and corresponding sub-batches as values
+        """
+        # Initialize an empty dictionary to store the sub-batches
+        sub_batches = {}
+        # Get unique IDs
+        unique_ids = id_batch.unique()
+        # Initialize a list to store the original indices
+        original_indices = []
+        # Iterate over unique IDs and create sub-batches
+        for unique_id in unique_ids:
+            # Find indices of the current ID in the id_batch
+            indices = (id_batch == unique_id).nonzero(as_tuple=True)[0]
+            # Create the sub-batch for the current ID
+            sub_batch = fmri_batch[indices]
+            # Store the sub-batch in the dictionary
+            sub_batches[unique_id.item()] = sub_batch
+            # Store the original indices
+            original_indices.extend(indices.tolist())
+
+        return sub_batches, original_indices
+
+    def forward(self, id_batch, fmri_batch):
+        sub_batches, original_indices = self.generate_sub_batches(id_batch, fmri_batch)
+        outputs = []
+        for sub_num, sub_batch in sub_batches.items():
+            sub_batch = self.apply_mask_and_flatten(sub_batch, self.masks[sub_num].to(sub_batch.device))
+            out = self.linears[sub_num](sub_batch)
+            outputs.append(out)
         # Concatenate the outputs along the batch dimension
         outputs = torch.cat(outputs, dim=0)
+        # Reorder the outputs based on the original indices
+        outputs = outputs[torch.argsort(torch.tensor(original_indices))]
         # Reshape the output to [batch_size, 1, out_features]
-        outputs = outputs.view(-1, 1, self.out_features)
+        outputs = outputs.view(-1, 1, self.out_dim)
         return outputs

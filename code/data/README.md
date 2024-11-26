@@ -27,7 +27,7 @@ git clone https://github.com/intsystems/CreationOfIntelligentSystems_Simultaneou
 
 Navigate to the repository directory:
 ```bash
-cd CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code
+cd CreationOfIntelligentSystems_Simultaneous_fMRI-EEG
 ```
 
 Create a conda environment using the provided `environment.yml` file:

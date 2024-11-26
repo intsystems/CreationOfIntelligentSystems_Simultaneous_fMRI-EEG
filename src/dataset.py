@@ -164,13 +164,15 @@ def build_dataloaders(dataset_json: str, batch_size: int, train_ratio: float = 0
     """ Builds train/validate dataloaders for (id, eeg, fmri, imgs) triplets
 
     Args:
-        train_ratio (float): data ratio for tran, should be in (0., 1.)
+        train_ratio (float): data ratio for train, should be in (0., 1.)
 
     Returns:
         tuple[DataLoader]: train/validate dataloaders
     """
     dataset = BrainStimuliDataset(dataset_json)
-    train_dataset, val_dataset = random_split(dataset, [0.9, 0.1])
+    train_size = int(train_ratio * len(dataset))
+    test_size = len(dataset) - train_size
+    train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
 
     train_dataloader = DataLoader(train_dataset, batch_size, shuffle=True, collate_fn=collate_fn)
     val_dataloader = DataLoader(val_dataset, batch_size, shuffle=False, collate_fn=collate_fn)

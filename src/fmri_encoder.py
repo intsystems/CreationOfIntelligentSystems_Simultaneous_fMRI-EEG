@@ -158,8 +158,8 @@ class RidgeRegression(nn.Module):
 
         return sub_batches, original_indices
 
-    def forward(self, id_batch, fmri_batch):
-        sub_batches, original_indices = self.generate_sub_batches(id_batch, fmri_batch)
+    def forward(self, x, participant_id):
+        sub_batches, original_indices = self.generate_sub_batches(participant_id, x)
         outputs = []
         for sub_num, sub_batch in sub_batches.items():
             sub_batch = self.apply_mask_and_flatten(sub_batch, self.masks[sub_num].to(sub_batch.device))

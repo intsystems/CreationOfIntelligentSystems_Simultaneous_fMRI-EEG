@@ -164,15 +164,31 @@ def build_dataloaders(dataset_json: str, batch_size: int, train_ratio: float = 0
     """ Builds train/validate dataloaders for (id, eeg, fmri, imgs) triplets
 
     Args:
-        train_ratio (float): data ratio for tran, should be in (0., 1.)
+        train_ratio (float): data ratio for train, should be in (0., 1.)
 
     Returns:
         tuple[DataLoader]: train/validate dataloaders
     """
     dataset = BrainStimuliDataset(dataset_json)
-    train_dataset, val_dataset = random_split(dataset, [0.9, 0.1])
+    train_size = int(train_ratio * len(dataset))
+    test_size = len(dataset) - train_size
+    train_dataset, val_dataset = random_split(dataset, [train_size, test_size])
 
     train_dataloader = DataLoader(train_dataset, batch_size, shuffle=True, collate_fn=collate_fn)
     val_dataloader = DataLoader(val_dataset, batch_size, shuffle=False, collate_fn=collate_fn)
 
     return train_dataloader, val_dataloader
+
+
+def select_random_dimension(batch):
+    """
+    Selects a random dimension for each object in the batch and returns a batch of size (batch_size, 1024).
+
+    :param batch: Tensor of shape (batch_size, num_dimensions, 1024)
+    :return: Tensor of shape (batch_size, 1024)
+    """
+    batch_size, num_dimensions, _ = batch.size()
+    # Generate random indices for each object in the batch
+    random_indices = torch.randint(0, num_dimensions, (batch_size,))
+    # Use the random indices to select the corresponding dimensions
+    return batch[torch.arange(batch_size), random_indices]

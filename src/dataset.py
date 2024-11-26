@@ -47,6 +47,7 @@ class BrainStimuliDataset(Dataset):
         eeg_list = []
         frames_list = []
         id_list = []
+        frame_paths_list = []
         for data in data_list:
             # sub id
             _, sep, after = data['nifti_path'].partition('natview')
@@ -65,6 +66,7 @@ class BrainStimuliDataset(Dataset):
             # frames
             frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in 
                            range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]
+            frame_paths_list.append([os.path.join(data['frames_dir'], frame_path).replace('.pt', '.jpg') for frame_path in frames_paths])
             frames = list(map(lambda x: torch.load(os.path.join(data['frames_dir'], x), map_location="cuda"), frames_paths))
             frames_list.append(torch.stack(frames))
         # stack tensors
@@ -81,7 +83,8 @@ class BrainStimuliDataset(Dataset):
             'id': id_tensor,
             'fmri': fmri_tensor,
             'eeg': eeg_tensor,
-            'frames': frames_tensor
+            'frames': frames_tensor,
+            'frame_paths': frame_paths_list
         }
         
     def __len__(self):

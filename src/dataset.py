@@ -13,14 +13,21 @@ import torch
 from PIL import Image
 from torchvision import transforms
 import json
+import random
 from channel_recovery import ChannelRecovering
+
+
+def load_json_data(json_path):
+    with open(json_path, "r") as file:
+        data_dict = json.load(file)
+    return data_dict
 
 
 class BrainStimuliDataset(Dataset):
     def __init__(self, json_path, recovery_mode: str = "zeros"):
         self.json_path = json_path
         self.recovery_mode = recovery_mode
-        self.data_dict = self.load_json_data(json_path)
+        self.data_dict = load_json_data(json_path)
         self.calculate_length()
         # union of all the available channels in EEG experiments
         self.eeg_channels_ordered = [
@@ -33,78 +40,9 @@ class BrainStimuliDataset(Dataset):
         ]
         
     def __getitem__(self, index):
-        if isinstance(index, int):
-            index = [index]
-        elif isinstance(index, slice):
-            index = list(range(index.start or 0, index.stop or len(self), index.step or 1))
-        else:
-            raise TypeError('{cls} indices must be integers or slices, not {idx}'.format(
-                cls=type(self).__name__,
-                idx=type(index).__name__,
-            ))
-        data_list = [self.get_data_from_index(idx) for idx in index]
-        # initialize lists
-        fmri_list = []
-        eeg_list = []
-        frames_list = []
-        id_list = []
-        frame_paths_list = []
-        for data in data_list:
-            # sub id
-            _, sep, after = data['nifti_path'].partition('natview')
-            id = int((sep + after).split('/')[3].split('-')[1])
-            id_list.append(id)
-            # fmri
-            nii_img = nib.load(data['nifti_path'])
-            fmri_data = nii_img.get_fdata()
-            fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
-            fmri_list.append(torch.from_numpy(fmri).to(dtype=torch.float))
-            # eeg
-            raw_data = read_raw_eeglab(data['eeglab_path'])
-            eeg_data = self.recover_eeg(raw_data)
-            eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
-            eeg_list.append(torch.from_numpy(eeg).to(dtype=torch.float))
-            # frames
-            frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in 
-                           range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]
-            frame_paths_list.append([os.path.join(data['frames_dir'], frame_path).replace('.pt', '.jpg') for frame_path in frames_paths])
-            frames = list(map(lambda x: torch.load(os.path.join(data['frames_dir'], x), map_location="cuda"), frames_paths))
-            frames_list.append(torch.stack(frames))
-        # stack tensors
-        id_tensor = torch.tensor(id_list)
-        fmri_tensor = torch.stack(fmri_list)
-        eeg_tensor = torch.stack(eeg_list)
-        frames_tensor = torch.stack(frames_list)
-        # remove first dim for integer index 
-        if len(index) == 1:
-            fmri_tensor = fmri_tensor.squeeze(0)
-            eeg_tensor = eeg_tensor.squeeze(0)
-            frames_tensor = frames_tensor.squeeze(0)
-        return {
-            'id': id_tensor,
-            'fmri': fmri_tensor,
-            'eeg': eeg_tensor,
-            'frames': frames_tensor,
-            'frame_paths': frame_paths_list
-        }
-        
-    def __len__(self):
-        return self.count
+        data = self.get_data_from_index(index)
+        return self.process_data(data)
     
-    def load_json_data(self, json_path):
-        with open(json_path, "r") as file:
-            data_dict = json.load(file)
-        return data_dict
-    
-    def calculate_length(self):
-        count = 0
-        for key in self.data_dict.keys():
-            for sub in list(self.data_dict[key].keys())[1:]:
-                for ses in self.data_dict[key][sub].keys():
-                    for run in self.data_dict[key][sub][ses].keys():
-                        count += len(self.data_dict[key][sub][ses][run]['chunks'])
-        self.count = count
-        
     def get_data_from_index(self, idx):
         """Should be enhanced for multiple indices, as it is called during the `self.__getitem__()`"""
         current_index = idx    
@@ -124,7 +62,45 @@ class BrainStimuliDataset(Dataset):
                         else:
                             current_index -= count
                             continue
-                        
+        
+    def process_data(self, data):
+        # sub id
+        _, sep, after = data['nifti_path'].partition('natview')
+        id = int((sep + after).split('/')[2].split('-')[1]) - 1
+        # fmri
+        nii_img = nib.load(data['nifti_path'])
+        fmri_data = nii_img.get_fdata()
+        fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
+        fmri = torch.from_numpy(fmri).to(dtype=torch.float)
+        # eeg
+        raw_data = read_raw_eeglab(data['eeglab_path'])
+        eeg_data = self.recover_eeg(raw_data)
+        eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
+        eeg = torch.from_numpy(eeg).to(dtype=torch.float)
+        # frames
+        frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in
+                       range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]
+        frames = list(map(lambda x: torch.load(os.path.join(data['frames_dir'], x), map_location="cuda"), frames_paths))
+        frames = torch.stack(frames)
+        return {
+            'id': id,
+            'fmri': fmri,
+            'eeg': eeg,
+            'frames': frames
+        }
+        
+    def calculate_length(self):
+        count = 0
+        for key in self.data_dict.keys():
+            for sub in list(self.data_dict[key].keys())[1:]:
+                for ses in self.data_dict[key][sub].keys():
+                    for run in self.data_dict[key][sub][ses].keys():
+                        count += len(self.data_dict[key][sub][ses][run]['chunks'])
+        self.count = count
+        
+    def __len__(self):
+        return self.count
+    
     def recover_eeg(self, raw_egg):
         """Recover missing EEG channels according to mode in self.recovery_mode
         """
@@ -186,6 +162,7 @@ def collate_fn(data):
         'eeg': eeg_tensor, 
         'frames': frames_tensor
     }
+    
 
 def build_dataloaders(dataset_json: str, batch_size: int, train_ratio: float = 0.9) -> tuple[DataLoader]:
     """ Builds train/validate dataloaders for (id, eeg, fmri, imgs) triplets
@@ -219,3 +196,98 @@ def select_random_dimension(batch):
     random_indices = torch.randint(0, num_dimensions, (batch_size,))
     # Use the random indices to select the corresponding dimensions
     return batch[torch.arange(batch_size), random_indices]
+
+
+###############################################################################
+
+
+class BrainStimuliDataLoader:
+    def __init__(self, dataset, batch_size):
+        self.batch_size = batch_size
+        self.data_dict = dataset.data_dict
+        self.process_data = dataset.process_data
+
+    def __iter__(self):
+        batch = []
+        num_chunks_list = self.distribute_uniformly(self.batch_size, len(self.data_dict))
+
+        for key, num_chunks in zip(self.data_dict.keys(), num_chunks_list):
+
+            chunk_indices = []
+            sub_list = list(self.data_dict[key].keys())[1:]
+            sub_sample = self.custom_sample(sub_list, num_chunks)
+
+            for sub in sub_sample:
+                # sample random session
+                ses_list = list(self.data_dict[key][sub].keys())
+                ses = random.choice(ses_list)
+                # sample random run
+                run_list = list(self.data_dict[key][sub][ses].keys())
+                run = random.choice(run_list)
+                # sample random chunk, **that was not used before**
+                chunk_list = list(self.data_dict[key][sub][ses][run]['chunks'].keys())
+                chunk = random.choice(list(set(chunk_list) - set(chunk_indices)))
+                chunk_indices.append(chunk)
+                # append this chunk into batch
+                batch.append(self.process_data({
+                    'frames_dir': self.data_dict[key]['frames_dir'],
+                    'nifti_path': self.data_dict[key][sub][ses][run]['nifti_path'],
+                    'eeglab_path': self.data_dict[key][sub][ses][run]['eeglab_path'],
+                    'time_indices': self.data_dict[key][sub][ses][run]['chunks'][chunk]
+                }))
+                
+        yield collate_fn(batch)
+        
+    @staticmethod
+    def distribute_uniformly(total, n):
+        """
+        Distribute a total number uniformly between n nodes.
+
+        Args:
+            total (int): The total number to be distributed.
+            n (int): The number of nodes.
+
+        Returns:
+            list: A list of integers representing the distribution.
+        """
+
+        base = total // n
+        remainder = total % n
+
+        distribution = [base] * n
+
+        for i in range(remainder):
+            distribution[i] += 1
+
+        return distribution
+    
+    @staticmethod
+    def custom_sample(lst, num_samples):
+        """
+        Sample elements from a list in a custom manner.
+
+        Args:
+            lst (list): The list to sample from.
+            num_samples (int): The number of samples to draw.
+
+        Returns:
+            list: The sampled elements.
+        """
+        list_len = len(lst)
+
+        if num_samples <= list_len:
+            # Sample without replacement
+            return random.sample(lst, num_samples)
+        else:
+            # Calculate the number of full cycles and the remainder
+            full_cycles = num_samples // list_len
+            remainder = num_samples % list_len
+
+            # Create the base sample with full cycles
+            base_sample = lst * full_cycles
+
+            # Sample the remainder without replacement
+            remainder_sample = random.sample(lst, remainder)
+
+            # Combine the base sample and the remainder sample
+            return base_sample + remainder_sample

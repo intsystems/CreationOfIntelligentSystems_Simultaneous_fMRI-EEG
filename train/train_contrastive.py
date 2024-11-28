@@ -12,7 +12,12 @@ from diffusers.optimization import get_scheduler
 # Import custom scripts
 import sys
 sys.path.append('../src')
-from dataset import build_dataloaders, select_random_dimension
+from dataset import (
+    build_dataloaders, 
+    select_random_dimension,
+    BrainStimuliDataset,
+    BrainStimuliDataLoader
+)
 from brain_encoder import BrainEncoder
 
 import wandb
@@ -58,9 +63,10 @@ if __name__ == '__main__':
 
     # Initialize the model and move it to the appropriate device and data type
     model = BrainEncoder(**config.model_kwargs).to(accelerator.device).to(weight_dtype)
-
-    # Build data loaders for training and validation
-    train_dataloader, val_dataloader = build_dataloaders(**config.dataloaders_kwargs)
+    
+    # Build dataloader
+    dataset = BrainStimuliDataset(**config.dataloader_kwargs.dataset)
+    dataloader = BrainStimuliDataLoader(dataset, **config.dataloader_kwargs.dataloader)
 
     # Initialize the optimizer
     optimizer = optim.AdamW(model.parameters(), **config.optimizer_kwargs)
@@ -74,8 +80,8 @@ if __name__ == '__main__':
     )
 
     # Prepare the model, optimizer, scheduler, and data loaders for distributed training
-    model, optimizer, scheduler, train_dataloader, val_dataloader = accelerator.prepare(
-        model, optimizer, scheduler, train_dataloader, val_dataloader
+    model, optimizer, scheduler, dataloader = accelerator.prepare(
+        model, optimizer, scheduler, dataloader
     )
 
     # Initialize tracking for experiments
@@ -115,13 +121,13 @@ if __name__ == '__main__':
     # Training loop
     for epoch in range(first_epoch, config.max_train_epochs):
         model.train()
-        for step, batch in enumerate(train_dataloader):
+        for step, batch in enumerate(dataloader):
             with accelerator.accumulate(model):
                 # Extract data from the batch
-                sub_ids = batch["id"]
-                batch_eeg = batch["eeg"].to(weight_dtype)
-                batch_fmri = batch["fmri"].to(weight_dtype)
-                image_features = batch["frames"].to(weight_dtype)
+                sub_ids = batch["id"].to(accelerator.device)
+                batch_eeg = batch["eeg"].to(weight_dtype).to(accelerator.device)
+                batch_fmri = batch["fmri"].to(weight_dtype).to(accelerator.device)
+                image_features = batch["frames"].to(weight_dtype).to(accelerator.device)
                 image_features = select_random_dimension(image_features)
 
                 # Compute the loss
@@ -136,7 +142,7 @@ if __name__ == '__main__':
                 logits = output['logits_per_brain'].detach()
 
                 # Gather the losses across all processes for logging
-                avg_loss = accelerator.gather(loss.repeat(config.dataloaders_kwargs.batch_size)).mean()
+                avg_loss = accelerator.gather(loss.repeat(config.dataloader_kwargs.dataloader.batch_size)).mean()
                 train_loss = avg_loss.item() / config.gradient_accumulation_steps
 
                 # Backpropagation
@@ -147,7 +153,7 @@ if __name__ == '__main__':
 
                 # Compute accuracy
                 predicted = torch.argmax(logits, dim=1)
-                labels = torch.arange(config.dataloaders_kwargs.batch_size).to(accelerator.device)
+                labels = torch.arange(config.dataloader_kwargs.dataloader.batch_size).to(accelerator.device)
                 accuracy = (predicted == labels).float().mean().item()
 
                 # Log training metrics

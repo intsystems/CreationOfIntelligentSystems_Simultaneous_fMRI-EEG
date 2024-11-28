@@ -13,12 +13,13 @@ import torch
 from PIL import Image
 from torchvision import transforms
 import json
+from channel_recovery import ChannelRecovering
 
 
 class BrainStimuliDataset(Dataset):
-    def __init__(self, json_path, frame_size=224):
+    def __init__(self, json_path, recovery_mode: str = "zeros"):
         self.json_path = json_path
-        self.frame_size = frame_size
+        self.recovery_mode = recovery_mode
         self.data_dict = self.load_json_data(json_path)
         self.calculate_length()
         # union of all the available channels in EEG experiments
@@ -60,7 +61,7 @@ class BrainStimuliDataset(Dataset):
             fmri_list.append(torch.from_numpy(fmri).to(dtype=torch.float))
             # eeg
             raw_data = read_raw_eeglab(data['eeglab_path'])
-            eeg_data = self.insert_zero_rows_in_array(raw_data)
+            eeg_data = self.recover_eeg(raw_data)
             eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
             eeg_list.append(torch.from_numpy(eeg).to(dtype=torch.float))
             # frames
@@ -123,6 +124,29 @@ class BrainStimuliDataset(Dataset):
                         else:
                             current_index -= count
                             continue
+                        
+    def recover_eeg(self, raw_egg):
+        """Recover missing EEG channels according to mode in self.recovery_mode
+        """
+        # insert absent channels with nans first
+        raw_egg_with_nans, nan_ids = ChannelRecovering.insert_nan_rows_in_array(raw_egg)
+
+        # fill missing data according to chosen mode
+        if self.recovery_mode is "zeros":
+            return ChannelRecovering.replace_NaN_with_zeros(
+                raw_egg_with_nans,
+                nan_ids
+            )
+        elif self.recovery_mode is "kNN":
+            return ChannelRecovering.replace_NaN_with_euclidean_nearest_neighbour(
+                raw_egg_with_nans,
+                nan_ids
+            )
+        elif self.recovery_mode is "kNN_weighted":
+            return ChannelRecovering.replace_NaN_with_eucl_weighted_nearest_neighbour(
+                raw_egg_with_nans,
+                nan_ids
+            )
                         
     def insert_zero_rows_in_array(self, raw_data):
         """Sort channels in `raw_data`, and then insert zero rows for channels that are not included in `raw_data.ch_names`"""

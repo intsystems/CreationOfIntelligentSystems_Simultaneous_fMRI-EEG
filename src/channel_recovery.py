@@ -113,20 +113,8 @@ class ChannelRecovering:
     @staticmethod
     def replace_NaN_with_zeros(eeg_with_nans, nan_ids):
         eeg_with_nans = eeg_with_nans.copy()
-
-
-        # Load a standard montage
-        montage = mne.channels.make_standard_montage('standard_1020')
-
-        # Get the positions of your channels
-        channel_positions = montage.get_positions()['ch_pos']
-
-        ordered = OrderedDict((k, channel_positions[k]) for k in ChannelRecovering.all_eeg_channels_ordered)
-        all_values = np.array([ordered[ch_name] for ch_name in ChannelRecovering.all_eeg_channels_ordered])
-
         for nan_id in nan_ids:
             eeg_with_nans[nan_id] = 0
-
         return eeg_with_nans
 
 

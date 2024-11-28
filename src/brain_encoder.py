@@ -30,9 +30,16 @@ class BrainEncoder(nn.Module):
             fuser_kwargs (dict): Keyword arguments for the fuser model.
         """
         super().__init__()
+        
         self.RidgeRegression = RidgeRegression(**ridge_kwargs)
         self.fMRIEncoder = fMRIEncoder(**fmri_kwargs)
-        self.EEGEncoder = EEGEncoder(**eeg_kwargs)
+        
+        num_subs = len(self.RidgeRegression.masks)
+        self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
+        self.EEGEncoder = EEGEncoder(
+            participants_embedding=self.eeg_participants_embedding,
+            **eeg_kwargs
+        )
 
         # Determine the type of fuser to use based on the provided fuser_kwargs
         fuser_name = fuser_kwargs.get('fuser_name')
@@ -66,8 +73,8 @@ class BrainEncoder(nn.Module):
         fmri_emb = self.fMRIEncoder(fmri_emb)
 
         # Encode EEG data
-        eeg_emb = self.EEGEncoder(batch_eeg)
-        # eeg_emb = self.EEGEncoder(batch_eeg, participant_id=sub_ids)
+        # eeg_emb = self.EEGEncoder(batch_eeg)
+        eeg_emb = self.EEGEncoder(batch_eeg, participant_id=sub_ids)
 
         # Fuse EEG and fMRI embeddings
         fmri_eeg_emb = self.EegFmriFuser(eeg_emb=eeg_emb, fmri_emb=fmri_emb)

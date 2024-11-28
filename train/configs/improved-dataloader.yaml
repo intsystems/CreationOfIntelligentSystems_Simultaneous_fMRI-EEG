@@ -29,7 +29,6 @@ model_kwargs:
         input_length: 525
         num_channels: 61
         output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
-        # participants_embedding: none
         conv_output_dim: 512
         conv_kernal_size: 50
         transformer_num_layers: 1

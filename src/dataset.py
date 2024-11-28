@@ -132,17 +132,17 @@ class BrainStimuliDataset(Dataset):
         raw_egg_with_nans, nan_ids = ChannelRecovering.insert_nan_rows_in_array(raw_egg)
 
         # fill missing data according to chosen mode
-        if self.recovery_mode is "zeros":
+        if self.recovery_mode == "zeros":
             return ChannelRecovering.replace_NaN_with_zeros(
                 raw_egg_with_nans,
                 nan_ids
             )
-        elif self.recovery_mode is "kNN":
+        elif self.recovery_mode == "kNN":
             return ChannelRecovering.replace_NaN_with_euclidean_nearest_neighbour(
                 raw_egg_with_nans,
                 nan_ids
             )
-        elif self.recovery_mode is "kNN_weighted":
+        elif self.recovery_mode == "kNN_weighted":
             return ChannelRecovering.replace_NaN_with_eucl_weighted_nearest_neighbour(
                 raw_egg_with_nans,
                 nan_ids

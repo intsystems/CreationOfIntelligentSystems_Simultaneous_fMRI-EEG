@@ -33,6 +33,9 @@
 ## 💡 Abstract
 How to decode human vision through neural signals has attracted a long-standing interest in neuroscience and machine learning. Modern contrastive learning and generative models improved the performance of visual decoding and reconstruction based on functional Magnetic Resonance Imaging (fMRI) and electroencephalography (EEG). However, combining these two types of information is difficult to decode visual stimuli, including due to a lack of training data. In this study, we present an end-to-end fMRI-EEG based visual reconstruction zero-shot framework, consisting of multiple tailored brain encoders and fuse module, which projects neural signals from different sources into the shared subspace as the CLIP embedding, and a two-stage multi-pipe fMRI-EEG-to-image generation strategy. In stage one, fMRI and EEG are embedded to align the high-level CLIP embedding, and then the prior diffusion model refines combined embedding into image priors. In stage two, we input this combined embedding to a pre-trained diffusion model. The experimental results indicate that our fMRI-EEG-based visual zero-shot framework achieves SOTA performance in reconstruction, highlighting the portability, low cost, and hight temporal and spatial resolution of combined fMRI-EEG, enabling a wide range of BCI applications.
 
+## 🧰 Method
+![method scheme](https://github.com/user-attachments/assets/77254da9-8c26-4255-b289-ab6621f0f832)
+
 ## 🔗 Useful links
 - [Brain Imaging Data Structure (BIDS) Starter Kit](https://bids-standard.github.io/bids-starter-kit/index.html)
 - [OpenNeuroDatasets](https://github.com/OpenNeuroDatasets)

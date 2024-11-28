@@ -24,13 +24,14 @@
     </tr>
 </table>
 
-## 🔎 Idea and Novelty
+## 🔎 Overview
+![scheme](https://github.com/user-attachments/assets/2777eab1-de35-4c4c-8309-6030bf2892ee)
 - Reconstruct images, which participants viewed during the simultaneous fMRI-EEG procedure
 - There is no method that uses a simultaneous fMRI-EEG signal (only fMRI / EEG separately)
 - [LinkReview](https://github.com/intsystems/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/blob/main/linkreview.md)
 
 ## 💡 Abstract
-The study investigates the task of reconstructing visual stimuli from simultaneous functional magnetic resonance imaging (fMRI) and electroencephalography (EEG) signals. A novel method for reconstructing visual stimuli using diffusion neural networks has been proposed. A technique for encoding simultaneous fMRI and EEG data has been developed, and supervised learning has been applied to train the encoding architecture. Experiments were conducted on a state-of-the-art dataset with a large number of participants.
+How to decode human vision through neural signals has attracted a long-standing interest in neuroscience and machine learning. Modern contrastive learning and generative models improved the performance of visual decoding and reconstruction based on functional Magnetic Resonance Imaging (fMRI) and electroencephalography (EEG). However, combining these two types of information is difficult to decode visual stimuli, including due to a lack of training data. In this study, we present an end-to-end fMRI-EEG based visual reconstruction zero-shot framework, consisting of multiple tailored brain encoders and fuse module, which projects neural signals from different sources into the shared subspace as the CLIP embedding, and a two-stage multi-pipe fMRI-EEG-to-image generation strategy. In stage one, fMRI and EEG are embedded to align the high-level CLIP embedding, and then the prior diffusion model refines combined embedding into image priors. In stage two, we input this combined embedding to a pre-trained diffusion model. The experimental results indicate that our fMRI-EEG-based visual zero-shot framework achieves SOTA performance in reconstruction, highlighting the portability, low cost, and hight temporal and spatial resolution of combined fMRI-EEG, enabling a wide range of BCI applications.
 
 ## 🔗 Useful links
 - [Brain Imaging Data Structure (BIDS) Starter Kit](https://bids-standard.github.io/bids-starter-kit/index.html)

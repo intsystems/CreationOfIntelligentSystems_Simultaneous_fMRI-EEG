@@ -141,10 +141,10 @@ class EEGEncoder(nn.Module):
         batch_size = x.shape[0]
 
         # if we have participant's embeddings then add them as the first token to the EEG channels
-        if self.participants_embedding:
+        if self.participants_embedding is not None:
             # use participant's embeddings or mean embedding otherwise
-            if participant_id:
-                participant_emb = self.participants_embedding(participant_id)
+            if participant_id is not None:
+                participant_emb = self.participants_embedding(participant_id).unsqueeze(1)
             else:
                 participant_emb = self.participants_embedding.weight.mean(
                     dim=0
@@ -161,7 +161,7 @@ class EEGEncoder(nn.Module):
 
         x = self.transformer_stack(x)
         # leave participant's embedding if it exists
-        if self.participants_embedding:
+        if self.participants_embedding is not None:
             x = x[:, 1:, :]
 
         x = self.conv_module(x)

@@ -2,6 +2,7 @@
 *.bin
 *.pkl
 wandb/
+code/data/combined
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

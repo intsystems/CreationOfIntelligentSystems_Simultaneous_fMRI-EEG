@@ -1,4 +1,6 @@
-# Visual stimuli reconstruction from simultaneous fMRI-EEG signals
+## Visual stimuli reconstruction from simultaneous fMRI-EEG signals
+
+[![website](https://img.shields.io/badge/Project-Page-orange)](https://intsystems.github.io/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/)
 
 [![License](https://badgen.net/github/license/intsystems/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG?color=green)](https://github.com/intsystems/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/blob/main/LICENSE)
 [![GitHub Contributors](https://img.shields.io/github/contributors/intsystems/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG)](https://github.com/intsystems/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/graphs/contributors)
@@ -6,10 +8,6 @@
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr-closed/intsystems/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG.svg?color=7f29d6)](https://github.com/intsystems/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/pulls)
 
 <table>
-    <tr>
-        <td align="left"> <b> Title </b> </td>
-        <td> Visual stimuli reconstruction from simultaneous fMRI-EEG signals </td>
-    </tr>
     <tr>
         <td align="left"> <b> Authors </b> </td>
         <td> Daniil Dorin, Nikita Kiselev, Ernest Nasyrov, Kirill Semkin </td>

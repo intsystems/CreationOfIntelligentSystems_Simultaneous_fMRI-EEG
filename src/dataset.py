@@ -55,7 +55,7 @@ class BrainStimuliDataset(Dataset):
                             time_indices = self.data_dict[key][sub][ses][run]['chunks'][str(current_index)]
                             return {
                                 'frames_dir': self.data_dict[key]['frames_dir'],
-                                'index': {'sub': sub, 'ses': ses, 'run': run, 'chunk': current_index},
+                                'index': {'key': key, 'sub': sub, 'ses': ses, 'run': run, 'chunk': current_index},
                                 'nifti_path': self.data_dict[key][sub][ses][run]['nifti_path'],
                                 'eeglab_path': self.data_dict[key][sub][ses][run]['eeglab_path'],
                                 'time_indices': time_indices

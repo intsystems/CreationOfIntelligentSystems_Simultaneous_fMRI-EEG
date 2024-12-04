@@ -62,6 +62,7 @@ def main(args):
             # save combined embeds
             combined_dir = os.path.join(
                 args.save_dir,
+                x['index']['key'],
                 x['index']['sub'],
                 x['index']['ses'],
                 x['index']['run']

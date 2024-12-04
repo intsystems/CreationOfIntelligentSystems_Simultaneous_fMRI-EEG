@@ -1,20 +1,87 @@
+import os
+import json
 import torch
 from torch.utils.data import Dataset, DataLoader
 
 
+def load_json_data(json_path):
+    with open(json_path, "r") as file:
+        data_dict = json.load(file)
+    return data_dict
+
+
+def prepare_embedding_paths(json_path, combined_dir):
+    
+    data_dict = load_json_data(json_path)
+    embedding_paths = []
+    
+    for key in data_dict.keys():
+        for sub in list(data_dict[key].keys())[1:]:
+            for ses in data_dict[key][sub].keys():
+                for run in data_dict[key][sub][ses].keys():
+                    for chunk_idx in data_dict[key][sub][ses][run]['chunks'].keys():
+                        
+                        # make path to combined embeds
+                        combined_path = os.path.join(
+                            combined_dir,
+                            key,
+                            sub,
+                            ses,
+                            run,
+                            f'chunk-{chunk_idx}.pt'
+                        )
+    
+                        # get time indices for frames
+                        time_indices = data_dict[key][sub][ses][run]['chunks'][chunk_idx]['frames']
+                        
+                        # make path to image embeds
+                        frame_paths = [
+                            os.path.join(
+                                data_dict[key]['frames_dir'],
+                                f'frame_{frame_idx:04d}.pt'
+                            )
+                            for frame_idx in
+                            range(time_indices['start_idx'], time_indices['end_idx'] + 1)
+                        ]
+                        
+                        # append paths to list
+                        embedding_paths.append({
+                            'combined': combined_path,
+                            'image': frame_paths
+                        })
+                        
+    return embedding_paths
+    
+
+
 class EmbeddingDataset(Dataset):
 
-    def __init__(self, combined_embeddings, image_embeddings):
-        self.combined_embeddings = combined_embeddings
-        self.image_embeddings = image_embeddings
+    def __init__(self, json_path, combined_dir):
+        self.embedding_paths = prepare_embedding_paths(json_path, combined_dir)
 
     def __len__(self):
-        return len(self.combined_embeddings)
+        return len(self.embedding_paths)
 
     def __getitem__(self, idx):
+        
+        # load combined embeds
+        combined_embedding = torch.load(
+            self.embedding_paths[idx]['combined'], 
+            map_location="cuda", 
+            weights_only=True
+        )
+        
+        # load image embeds
+        image_embedding = torch.stack(
+            list(map(
+                lambda x: torch.load(x, map_location="cuda", weights_only=True), 
+                frames_paths
+            ))
+        )
+        
         return {
-            "combined_embedding": self.combined_embeddings[idx],
-            "image_embedding": self.image_embeddings[idx]
+            "combined_embedding": combined_embedding,
+            "image_embedding": image_embedding
         }
 
 

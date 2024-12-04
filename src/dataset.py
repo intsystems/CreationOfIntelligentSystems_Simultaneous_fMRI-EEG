@@ -72,12 +72,12 @@ class BrainStimuliDataset(Dataset):
         nii_img = nib.load(data['nifti_path'])
         fmri_data = nii_img.get_fdata()
         fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
-        fmri = torch.from_numpy(fmri).to(dtype=torch.float)
+        fmri = torch.from_numpy(fmri)
         # eeg
         raw_data = read_raw_eeglab(data['eeglab_path'])
         eeg_data = self.recover_eeg(raw_data)
         eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
-        eeg = torch.from_numpy(eeg).to(dtype=torch.float)
+        eeg = torch.from_numpy(eeg)
         # frames
         frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in
                        range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]

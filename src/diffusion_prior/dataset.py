@@ -21,37 +21,40 @@ def prepare_embedding_paths(json_path, combined_dir):
                 for run in data_dict[key][sub][ses].keys():
                     for chunk_idx in data_dict[key][sub][ses][run]['chunks'].keys():
                         
-                        # make path to combined embeds
-                        combined_path = os.path.join(
-                            combined_dir,
-                            key,
-                            sub,
-                            ses,
-                            run,
-                            f'chunk-{chunk_idx}.pt'
-                        )
-    
-                        # get time indices for frames
-                        time_indices = data_dict[key][sub][ses][run]['chunks'][chunk_idx]['frames']
-                        
-                        # make path to image embeds
-                        frame_paths = [
-                            os.path.join(
-                                data_dict[key]['frames_dir'],
-                                f'frame_{frame_idx:04d}.pt'
+                        try:
+                            # make path to combined embeds
+                            combined_path = os.path.join(
+                                combined_dir,
+                                key,
+                                sub,
+                                ses,
+                                run,
+                                f'chunk-{chunk_idx}.pt'
                             )
-                            for frame_idx in
-                            range(time_indices['start_idx'], time_indices['end_idx'] + 1)
-                        ]
-                        
-                        # append paths to list
-                        embedding_paths.append({
-                            'combined': combined_path,
-                            'image': frame_paths
-                        })
+        
+                            # get time indices for frames
+                            time_indices = data_dict[key][sub][ses][run]['chunks'][chunk_idx]['frames']
+                            
+                            # make path to image embeds
+                            frame_paths = [
+                                os.path.join(
+                                    data_dict[key]['frames_dir'],
+                                    f'frame_{frame_idx:04d}.pt'
+                                )
+                                for frame_idx in
+                                range(time_indices['start_idx'], time_indices['end_idx'] + 1)
+                            ]
+                            
+                            # append paths to list
+                            embedding_paths.append({
+                                'combined': combined_path,
+                                'image': frame_paths
+                            })
+                            
+                        except FileNotFoundError:
+                            continue
                         
     return embedding_paths
-    
 
 
 class EmbeddingDataset(Dataset):
@@ -67,15 +70,15 @@ class EmbeddingDataset(Dataset):
         # load combined embeds
         combined_embedding = torch.load(
             self.embedding_paths[idx]['combined'], 
-            map_location="cuda", 
+            map_location="cpu", 
             weights_only=True
         )
         
         # load image embeds
         image_embedding = torch.stack(
             list(map(
-                lambda x: torch.load(x, map_location="cuda", weights_only=True), 
-                frames_paths
+                lambda x: torch.load(x, map_location="cpu", weights_only=True), 
+                self.embedding_paths[idx]['image']
             ))
         )
         

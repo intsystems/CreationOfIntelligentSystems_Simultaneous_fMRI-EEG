@@ -55,6 +55,7 @@ class BrainStimuliDataset(Dataset):
                             time_indices = self.data_dict[key][sub][ses][run]['chunks'][str(current_index)]
                             return {
                                 'frames_dir': self.data_dict[key]['frames_dir'],
+                                'index': {'key': key, 'sub': sub, 'ses': ses, 'run': run, 'chunk': current_index},
                                 'nifti_path': self.data_dict[key][sub][ses][run]['nifti_path'],
                                 'eeglab_path': self.data_dict[key][sub][ses][run]['eeglab_path'],
                                 'time_indices': time_indices
@@ -71,12 +72,12 @@ class BrainStimuliDataset(Dataset):
         nii_img = nib.load(data['nifti_path'])
         fmri_data = nii_img.get_fdata()
         fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
-        fmri = torch.from_numpy(fmri).to(dtype=torch.float)
+        fmri = torch.from_numpy(fmri)
         # eeg
         raw_data = read_raw_eeglab(data['eeglab_path'])
         eeg_data = self.recover_eeg(raw_data)
         eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
-        eeg = torch.from_numpy(eeg).to(dtype=torch.float)
+        eeg = torch.from_numpy(eeg)
         # frames
         frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in
                        range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]
@@ -84,9 +85,11 @@ class BrainStimuliDataset(Dataset):
         frames = torch.stack(frames)
         return {
             'id': id,
+            'index': data['index'],
             'fmri': fmri,
             'eeg': eeg,
-            'frames': frames
+            'frames': frames,
+            'frame_paths': [os.path.join(data['frames_dir'], path) for path in frames_paths]
         }
         
     def calculate_length(self):

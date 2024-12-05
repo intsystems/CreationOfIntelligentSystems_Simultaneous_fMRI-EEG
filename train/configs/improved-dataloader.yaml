@@ -5,7 +5,7 @@ log_with: wandb
 resume_from_checkpoint: latest
 gradient_accumulation_steps: 1
 mixed_precision: bf16
-max_train_epochs: 100
+max_train_epochs: 100000
 max_train_steps: 100000
 checkpointing_steps: 1000
 
@@ -44,16 +44,16 @@ model_kwargs:
 dataloader_kwargs:
     dataset:
         json_path: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/dataset.json
-        recovery_mode: zeros
+        recovery_mode: kNN_weighted
     dataloader:
-        batch_size: 4
+        batch_size: 8
 
 optimizer_kwargs:
     lr: 3e-4
     betas:
         - 0.9
         - 0.999
-    weight_decay: 1e-2
+    weight_decay: 1e-5
 
 scheduler_kwargs:
     name: constant

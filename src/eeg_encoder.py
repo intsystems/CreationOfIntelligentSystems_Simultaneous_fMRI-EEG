@@ -8,6 +8,9 @@ import torch.nn.functional as F
 
 
 class SpatioChannelConv(nn.Module):
+    """ Module takes channeled signals (num_channel, time) and make 
+         separate full time and full channel convolution. The output is vector.
+    """
     def __init__(
             self,
             input_length: int,
@@ -49,7 +52,7 @@ class SpatioChannelConv(nn.Module):
 
     def _compute_stride(self, input_length: int, kernal_size: int) -> int:
         """ Computes the stride parameter for time convolutions so that the time dimension
-             of the input is almost wrapped after applying one convolution and one avr. pooling
+             of the input is almost wrapped after applying one convolution and one average pooling
              with given kernal_size
         """
         # the result is a root of the quadratic equation
@@ -60,6 +63,9 @@ class SpatioChannelConv(nn.Module):
     
 
 class ResidualMlpProjector(nn.Module):
+    """ Input is projected to output dim and then transforms as x = x + f(x)
+         where f is MLP
+    """
     def __init__(
             self,
             input_dim: int,
@@ -80,9 +86,11 @@ class ResidualMlpProjector(nn.Module):
         x = x + self.residual_layers(x)
         x = self.norm_layer(x)
         return x
-    
+
 
 class EEGEncoder(nn.Module):
+    """ Encoder = Transformer layer + Spatio-time convolution + Residual MLP
+    """
     def __init__(
             self,
             input_length: int,
@@ -153,7 +161,7 @@ class EEGEncoder(nn.Module):
                     1,
                     self.input_length
                 )
-                
+         
             x = torch.concat(
                 [participant_emb, x],
                 dim=1
@@ -168,6 +176,3 @@ class EEGEncoder(nn.Module):
         x = self.projector(x)
 
         return x
-
-
-

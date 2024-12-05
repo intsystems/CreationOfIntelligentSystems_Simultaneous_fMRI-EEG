@@ -1,12 +1,25 @@
 import pytest
-from src.egg_encoder import *
-from model_configs import configs
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from src.eeg_encoder import SpatioChannelConv, ResidualMlpProjector, EEGEncoder
+from src.eeg_encoder import ConvEEGEncoder
+from tests.eeg_encoder_configs import encoder_configs, conv_encoder_configs
 
 
-# setup model's configs for the tests
-@pytest.fixture(scope="function", params=configs)
+# setup encoders's configs for the tests
+@pytest.fixture(scope="function", params=encoder_configs)
 def model_config_setup(request):
     return request.param
+
+# setup conv_encoders's configs for the tests
+@pytest.fixture(scope="function", params=conv_encoder_configs)
+def conv_model_config_setup(request):
+    return request.param
+
 
 def test_spatio_channel_conv_shapes(model_config_setup):
     """ tests right output shapes of the encoder's convolution module
@@ -58,5 +71,37 @@ def test_encoder_grads(model_config_setup):
 
     print("Mean grad value=", net_grads.mean().item())
 
-    assert not np.allclose(net_grads, torch.zeros_like(net_grads), atol=1e-3)
+    assert not torch.allclose(net_grads, torch.zeros_like(net_grads), atol=1e-3)
+
+def test_conv_encoder_shapes(conv_model_config_setup):
+    """ tests right output shapes of the whole encoder
+    """
+    config: dict = conv_model_config_setup
+
+    net = ConvEEGEncoder(**config)
+
+    model_input = torch.rand((2, config["num_channels"], config["input_length"]))
+    model_output = net(model_input)
+    assert model_output.size() == torch.Size([2, config["output_dim"]])
+
+def test_conv_encoder_grads(conv_model_config_setup):
+    """ tests grad population of the backward pass on the encoder
+    """
+    config: dict = conv_model_config_setup
+
+    net = ConvEEGEncoder(**config)
+
+    model_input = torch.rand((2, config["num_channels"], config["input_length"]))
+    model_output = net(model_input)
+    targets = torch.rand((2, config["output_dim"]))
+    loss = F.mse_loss(model_output, targets)
+    loss.backward()
+
+    net_grads = torch.concat([
+       param.grad.flatten() for param in net.parameters()
+    ])
+
+    print("Mean grad value=", net_grads.mean().item())
+
+    assert not torch.allclose(net_grads, torch.zeros_like(net_grads), atol=1e-3)
 

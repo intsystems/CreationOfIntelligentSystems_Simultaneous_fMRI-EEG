@@ -175,3 +175,6 @@ conftest.py
 natview
 dataset.json
 sub2fmripaths.json
+
+# VS Code
+.vscode

@@ -16,6 +16,7 @@ sys.path.append('../src')
 from dataset import select_random_dimension
 from diffusion_prior.model import DiffusionPriorUNet
 from diffusion_prior.dataset import EmbeddingDataset, EmbeddingDataLoader
+from utils import Timer
 
 import wandb
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     diffusion_prior = DiffusionPriorUNet(**config.model_kwargs).to(accelerator.device).to(weight_dtype)
     
     # Initialize diffusion scheduler (DDPM)
-    diffusion_scheduler = DDPMScheduler() 
+    noise_scheduler = DDPMScheduler(num_train_timesteps=config.num_train_timesteps) 
 
     # Build dataloader
     dataset = EmbeddingDataset(**config.dataloader_kwargs.dataset)
@@ -118,9 +119,6 @@ if __name__ == '__main__':
     # Initialize the progress bar
     progress_bar = tqdm(range(global_step, config.max_train_steps), disable=not accelerator.is_local_main_process)
 
-    # Get number of training timesteps for diffusion model
-    num_train_timesteps = diffusion_scheduler.config.num_train_timesteps
-
     # Training loop
     for epoch in range(first_epoch, config.max_train_epochs):
         diffusion_prior.train()
@@ -130,7 +128,7 @@ if __name__ == '__main__':
                 combined_embeds = batch["combined_embedding"].to(weight_dtype).to(accelerator.device)
                 image_embeds = batch["image_embedding"].to(weight_dtype).to(accelerator.device)
                 image_embeds = select_random_dimension(image_embeds)
-                N = image_embeds.shape[0]
+                bs = image_embeds.shape[0]
 
                 # 1. randomly replacing combined_embeds to None
                 if torch.rand(1) < config.cfg_drop_rate:
@@ -140,10 +138,14 @@ if __name__ == '__main__':
                 noise = torch.randn_like(image_embeds).to(weight_dtype).to(accelerator.device)
 
                 # 3. sample timestep
-                timesteps = torch.randint(0, num_train_timesteps, (N,), device=accelerator.device)
+                timesteps = torch.randint(
+                    0, config.num_train_timesteps, (bs,), 
+                    device=accelerator.device,
+                    dtype=torch.int64
+                )
 
                 # 4. add noise to image_embedding
-                perturbed_image_embeds = diffusion_scheduler.add_noise(
+                perturbed_image_embeds = noise_scheduler.add_noise(
                     image_embeds,
                     noise,
                     timesteps

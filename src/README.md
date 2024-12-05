@@ -8,3 +8,10 @@ This repository contains source code for different parts of our model.
 4. `channel_recovery.py` contains code to recover missing EEG channels in our dataset
 5. `dataset.py` contains dataset and dataloader for **BrainEncoder** training
 6. `utils.py` contains some utilities useful for our training, e.g., `Timer` to debug different code parts
+
+## Usage
+
+The only script in this directory you can run is `calculate_combined.py`, and you can do it as follows:
+```bash
+accelerate launch calculate_combined.py
+```

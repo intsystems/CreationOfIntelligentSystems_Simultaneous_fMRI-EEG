@@ -86,23 +86,28 @@ class DiffusionPrior:
             generator=None
         ):
         # combined_embeds (batch_size, cond_dim)
-        self.diffusion_prior.eval()
+        self.diffusion_prior = self.diffusion_prior.eval().float()
         N = combined_embeds.shape[0] if combined_embeds is not None else 1
 
         # 1. Prepare timesteps
         from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import retrieve_timesteps
-        timesteps, num_inference_steps = retrieve_timesteps(self.scheduler, num_inference_steps, self.device, timesteps)
+        print('num_inference_steps:', num_inference_steps)
+        timesteps, num_inference_steps = retrieve_timesteps(scheduler=self.scheduler, num_inference_steps=num_inference_steps, device=self.device, timesteps=timesteps)
 
         # 2. Prepare combined_embeds
         if combined_embeds is not None:
-            combined_embeds = combined_embeds.to(self.device)
+            combined_embeds = combined_embeds.to(self.device).float()
 
         # 3. Prepare noise
-        clip_t = torch.randn(N, self.diffusion_prior.embed_dim, generator=generator, device=self.device)
+        clip_t = torch.randn(
+            N, self.diffusion_prior.embed_dim, 
+            generator=generator, device=self.device, dtype=combined_embeds.dtype
+        )
 
         # 4. denoising loop
         for _, t in tqdm(enumerate(timesteps)):
-            t = torch.ones(clip_t.shape[0], dtype=torch.float, device=self.device) * t
+            t = torch.ones(clip_t.shape[0], dtype=combined_embeds.dtype, device=self.device) * t
+            
             # 4.1 noise prediction
             if guidance_scale == 0 or combined_embeds is None:
                 noise_pred = self.diffusion_prior(clip_t, t)

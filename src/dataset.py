@@ -24,7 +24,13 @@ def load_json_data(json_path):
 
 
 class BrainStimuliDataset(Dataset):
-    def __init__(self, json_path, recovery_mode: str = "zeros"):
+    def __init__(
+        self, 
+        json_path, 
+        recovery_mode: str = "zeros", 
+        drop_fmri: bool = False,
+        drop_eeg: bool = False
+    ):
         self.json_path = json_path
         self.recovery_mode = recovery_mode
         self.data_dict = load_json_data(json_path)
@@ -38,10 +44,16 @@ class BrainStimuliDataset(Dataset):
             'Oz', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'PO3', 'PO4',
             'PO7', 'PO8', 'POz', 'Pz', 'T7', 'T8', 'TP10', 'TP7', 'TP8', 'TP9'
         ]
+        self.drop_fmri = drop_fmri
+        self.drop_eeg = drop_eeg
         
     def __getitem__(self, index):
         data = self.get_data_from_index(index)
-        return self.process_data(data)
+        return self.process_data(
+            data=data,
+            drop_fmri=self.drop_fmri,
+            drop_eeg=self.drop_eeg,
+        )
     
     def get_data_from_index(self, idx):
         """Should be enhanced for multiple indices, as it is called during the `self.__getitem__()`"""
@@ -64,20 +76,31 @@ class BrainStimuliDataset(Dataset):
                             current_index -= count
                             continue
         
-    def process_data(self, data):
+    def process_data(
+        self, 
+        data, 
+        drop_fmri: bool = False, 
+        drop_eeg: bool = False
+    ):
         # sub id
         _, sep, after = data['nifti_path'].partition('natview')
         id = int((sep + after).split('/')[2].split('-')[1]) - 1
         # fmri
-        nii_img = nib.load(data['nifti_path'])
-        fmri_data = nii_img.get_fdata()
-        fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
-        fmri = torch.from_numpy(fmri)
+        if not drop_fmri:
+            nii_img = nib.load(data['nifti_path'])
+            fmri_data = nii_img.get_fdata()
+            fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
+            fmri = torch.from_numpy(fmri)
+        else:
+            fmri = None
         # eeg
-        raw_data = read_raw_eeglab(data['eeglab_path'])
-        eeg_data = self.recover_eeg(raw_data)
-        eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
-        eeg = torch.from_numpy(eeg)
+        if not drop_eeg:
+            raw_data = read_raw_eeglab(data['eeglab_path'])
+            eeg_data = self.recover_eeg(raw_data)
+            eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
+            eeg = torch.from_numpy(eeg)
+        else:
+            eeg = None
         # frames
         frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in
                        range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]
@@ -205,10 +228,18 @@ def select_random_dimension(batch):
 
 
 class BrainStimuliDataLoader:
-    def __init__(self, dataset, batch_size):
+    def __init__(
+        self, 
+        dataset, 
+        batch_size, 
+        drop_fmri: bool = False, 
+        drop_eeg: bool = False
+    ):
         self.batch_size = batch_size
         self.data_dict = dataset.data_dict
         self.process_data = dataset.process_data
+        self.drop_fmri = drop_fmri
+        self.drop_eeg = drop_eeg
 
     def __iter__(self):
         batch = []
@@ -237,7 +268,10 @@ class BrainStimuliDataLoader:
                     'nifti_path': self.data_dict[key][sub][ses][run]['nifti_path'],
                     'eeglab_path': self.data_dict[key][sub][ses][run]['eeglab_path'],
                     'time_indices': self.data_dict[key][sub][ses][run]['chunks'][chunk]
-                }))
+                },
+                    drop_fmri=self.drop_fmri,
+                    drop_eeg=self.drop_eeg                               
+                ))
                 
         yield collate_fn(batch)
         

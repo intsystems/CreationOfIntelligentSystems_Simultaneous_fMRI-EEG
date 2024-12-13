@@ -6,7 +6,63 @@ from eeg_fmri_fuser import EegFmriWeightFuser, EegFmriMlpFuser
 from eeg_encoder import EEGEncoder
 from fmri_encoder import fMRIEncoder, RidgeRegression
 
-class BrainEncoder(nn.Module):
+
+class BaseBrainEncoder(nn.Module):
+    """
+    BaseBrainEncoder is a base class for brain encoder models.
+
+    Attributes:
+        logit_scale (nn.Parameter): A learnable parameter for scaling logits.
+    """
+
+    def __init__(self):
+        super().__init__()
+        # Initialize logit_scale based on the original CLIP paper
+        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError("Forward method must be implemented by subclasses")
+
+    def loss(self, brain_features, image_features):
+        """
+        Computes the loss for the brain encoder.
+
+        Args:
+            brain_features (Tensor): Brain features.
+            image_features (Tensor): Image features to compare with brain features.
+
+        Returns:
+            dict: A dictionary containing the loss and logits per brain.
+        """
+        # Normalize features
+        image_features = image_features / image_features.norm(dim=1, keepdim=True)
+        brain_features = brain_features / brain_features.norm(dim=1, keepdim=True)
+
+        # Compute cosine similarity as logits
+        logit_scale = self.logit_scale.exp()
+        logits_per_image = logit_scale * image_features @ brain_features.T
+        logits_per_brain = logits_per_image.T
+
+        # Compute cross-entropy loss
+        batch_size = logits_per_image.shape[0]
+        labels = torch.arange(batch_size, device=image_features.device, dtype=torch.long)
+
+        total_loss = (F.cross_entropy(logits_per_image, labels) + F.cross_entropy(logits_per_brain, labels)) / 2
+
+        return {'loss': total_loss, 'logits_per_brain': logits_per_brain}
+
+    @property
+    def device(self):
+        """
+        Returns the device of the model parameters.
+
+        Returns:
+            torch.device: The device of the model parameters.
+        """
+        return next(iter(self.parameters()))[0].device
+
+
+class BrainEncoder(BaseBrainEncoder):
     """
     BrainEncoder is a neural network model designed to encode EEG and fMRI data
     and fuse them to produce a unified brain feature representation.
@@ -16,7 +72,6 @@ class BrainEncoder(nn.Module):
         fMRIEncoder (fMRIEncoder): An encoder for fMRI data.
         EEGEncoder (EEGEncoder): An encoder for EEG data.
         EegFmriFuser (Union[EegFmriWeightFuser, EegFmriMlpFuser]): A fuser model for combining EEG and fMRI embeddings.
-        logit_scale (nn.Parameter): A learnable parameter for scaling logits.
     """
 
     def __init__(self, ridge_kwargs, fmri_kwargs, eeg_kwargs, fuser_kwargs):
@@ -30,10 +85,10 @@ class BrainEncoder(nn.Module):
             fuser_kwargs (dict): Keyword arguments for the fuser model.
         """
         super().__init__()
-        
+
         self.RidgeRegression = RidgeRegression(**ridge_kwargs)
         self.fMRIEncoder = fMRIEncoder(**fmri_kwargs)
-        
+
         num_subs = len(self.RidgeRegression.masks)
         self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
         self.EEGEncoder = EEGEncoder(
@@ -53,9 +108,6 @@ class BrainEncoder(nn.Module):
         else:
             raise NotImplementedError(f"Fuser type {fuser_name} is not implemented")
 
-        # Initialize logit_scale based on the original CLIP paper
-        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
-
     def forward(self, sub_ids, batch_eeg, batch_fmri):
         """
         Forward pass of the BrainEncoder.
@@ -73,7 +125,6 @@ class BrainEncoder(nn.Module):
         fmri_emb = self.fMRIEncoder(fmri_emb)
 
         # Encode EEG data
-        # eeg_emb = self.EEGEncoder(batch_eeg)
         eeg_emb = self.EEGEncoder(batch_eeg, participant_id=sub_ids)
 
         # Fuse EEG and fMRI embeddings
@@ -101,29 +152,125 @@ class BrainEncoder(nn.Module):
             batch_fmri=batch_fmri
         ).to(image_features.dtype)
 
-        # Normalize features
-        image_features = image_features / image_features.norm(dim=1, keepdim=True)
-        brain_features = brain_features / brain_features.norm(dim=1, keepdim=True)
+        return super().loss(brain_features, image_features)
 
-        # Compute cosine similarity as logits
-        logit_scale = self.logit_scale.exp()
-        logits_per_image = logit_scale * image_features @ brain_features.T
-        logits_per_brain = logits_per_image.T
 
-        # Compute cross-entropy loss
-        batch_size = logits_per_image.shape[0]
-        labels = torch.arange(batch_size, device=image_features.device, dtype=torch.long)
+class fMRIBrainEncoder(BaseBrainEncoder):
+    """
+    fMRIBrainEncoder is a neural network model designed to encode fMRI data.
 
-        total_loss = (F.cross_entropy(logits_per_image, labels) + F.cross_entropy(logits_per_brain, labels)) / 2
+    Attributes:
+        RidgeRegression (RidgeRegression): A ridge regression model for fMRI data.
+        fMRIEncoder (fMRIEncoder): An encoder for fMRI data.
+    """
 
-        return {'loss': total_loss, 'logits_per_brain': logits_per_brain}
-
-    @property
-    def device(self):
+    def __init__(self, ridge_kwargs, fmri_kwargs):
         """
-        Returns the device of the model parameters.
+        Initializes the fMRIBrainEncoder with the specified parameters.
+
+        Args:
+            ridge_kwargs (dict): Keyword arguments for RidgeRegression.
+            fmri_kwargs (dict): Keyword arguments for fMRIEncoder.
+        """
+        super().__init__()
+
+        self.RidgeRegression = RidgeRegression(**ridge_kwargs)
+        self.fMRIEncoder = fMRIEncoder(**fmri_kwargs)
+
+    def forward(self, sub_ids, batch_fmri):
+        """
+        Forward pass of the fMRIBrainEncoder.
+
+        Args:
+            sub_ids (Tensor): Participant IDs.
+            batch_fmri (Tensor): Batch of fMRI data.
 
         Returns:
-            torch.device: The device of the model parameters.
+            Tensor: fMRI embeddings.
         """
-        return next(iter(self.parameters()))[0].device
+        # Encode fMRI data
+        fmri_emb = self.RidgeRegression(batch_fmri, participant_id=sub_ids)
+        fmri_emb = self.fMRIEncoder(fmri_emb)
+
+        return fmri_emb
+
+    def loss(self, sub_ids, batch_fmri, image_features, batch_eeg: torch.Tensor = None):
+        """
+        Computes the loss for the fMRIBrainEncoder.
+
+        Args:
+            sub_ids (Tensor): Participant IDs.
+            batch_fmri (Tensor): Batch of fMRI data.
+            image_features (Tensor): Image features to compare with brain features.
+
+        Returns:
+            dict: A dictionary containing the loss and logits per brain.
+        """
+        # Get brain features
+        brain_features = self(
+            sub_ids=sub_ids,
+            batch_fmri=batch_fmri
+        ).to(image_features.dtype)
+
+        return super().loss(brain_features, image_features)
+
+
+class EEGBrainEncoder(BaseBrainEncoder):
+    """
+    EEGBrainEncoder is a neural network model designed to encode EEG data.
+
+    Attributes:
+        EEGEncoder (EEGEncoder): An encoder for EEG data.
+    """
+
+    def __init__(self, eeg_kwargs):
+        """
+        Initializes the EEGBrainEncoder with the specified parameters.
+
+        Args:
+            eeg_kwargs (dict): Keyword arguments for EEGEncoder.
+        """
+        super().__init__()
+
+        num_subs = eeg_kwargs.get('num_subs')
+        self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
+        self.EEGEncoder = EEGEncoder(
+            participants_embedding=self.eeg_participants_embedding,
+            **eeg_kwargs
+        )
+
+    def forward(self, sub_ids, batch_eeg):
+        """
+        Forward pass of the EEGBrainEncoder.
+
+        Args:
+            sub_ids (Tensor): Participant IDs.
+            batch_eeg (Tensor): Batch of EEG data.
+
+        Returns:
+            Tensor: EEG embeddings.
+        """
+        # Encode EEG data
+        eeg_emb = self.EEGEncoder(batch_eeg, participant_id=sub_ids)
+
+        return eeg_emb
+
+    def loss(self, sub_ids, batch_eeg, image_features, batch_fmri: torch.Tensor = None):
+        """
+        Computes the loss for the EEGBrainEncoder.
+
+        Args:
+            sub_ids (Tensor): Participant IDs.
+            batch_eeg (Tensor): Batch of EEG data.
+            image_features (Tensor): Image features to compare with brain features.
+
+        Returns:
+            dict: A dictionary containing the loss and logits per brain.
+        """
+        # Get brain features
+        brain_features = self(
+            sub_ids=sub_ids,
+            batch_eeg=batch_eeg
+        ).to(image_features.dtype)
+
+        return super().loss(brain_features, image_features)

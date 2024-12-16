@@ -74,7 +74,7 @@ class BrainEncoder(BaseBrainEncoder):
         EegFmriFuser (Union[EegFmriWeightFuser, EegFmriMlpFuser]): A fuser model for combining EEG and fMRI embeddings.
     """
 
-    def __init__(self, ridge_kwargs, fmri_kwargs, eeg_kwargs, fuser_kwargs):
+    def __init__(self, ridge_kwargs, fmri_kwargs, eeg_kwargs, fuser_kwargs, num_subs: int = None):
         """
         Initializes the BrainEncoder with the specified parameters.
 
@@ -89,7 +89,6 @@ class BrainEncoder(BaseBrainEncoder):
         self.RidgeRegression = RidgeRegression(**ridge_kwargs)
         self.fMRIEncoder = fMRIEncoder(**fmri_kwargs)
 
-        num_subs = len(self.RidgeRegression.masks)
         self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
         self.EEGEncoder = EEGEncoder(
             participants_embedding=self.eeg_participants_embedding,
@@ -164,7 +163,7 @@ class fMRIBrainEncoder(BaseBrainEncoder):
         fMRIEncoder (fMRIEncoder): An encoder for fMRI data.
     """
 
-    def __init__(self, ridge_kwargs, fmri_kwargs):
+    def __init__(self, ridge_kwargs, fmri_kwargs, num_subs: int = None):
         """
         Initializes the fMRIBrainEncoder with the specified parameters.
 
@@ -223,7 +222,7 @@ class EEGBrainEncoder(BaseBrainEncoder):
         EEGEncoder (EEGEncoder): An encoder for EEG data.
     """
 
-    def __init__(self, eeg_kwargs):
+    def __init__(self, eeg_kwargs, num_subs: int = None):
         """
         Initializes the EEGBrainEncoder with the specified parameters.
 
@@ -232,7 +231,6 @@ class EEGBrainEncoder(BaseBrainEncoder):
         """
         super().__init__()
 
-        num_subs = eeg_kwargs.get('num_subs')
         self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
         self.EEGEncoder = EEGEncoder(
             participants_embedding=self.eeg_participants_embedding,

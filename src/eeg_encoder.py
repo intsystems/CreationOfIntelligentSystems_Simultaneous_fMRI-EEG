@@ -277,3 +277,101 @@ class ConvEEGEncoder(nn.Module):
         x = self.projector(x)
 
         return x
+    
+
+# ------------------------------- EEG encoders with loss for individual training ----------------------------------------
+
+
+def contrastive_loss(image_features, brain_features, logit_scale) -> dict:
+    # Normalize features
+    image_features = image_features / image_features.norm(dim=1, keepdim=True)
+    brain_features = brain_features / brain_features.norm(dim=1, keepdim=True)
+
+    # Compute cosine similarity as logits
+    logit_scale = logit_scale.exp()
+    logits_per_image = logit_scale * image_features @ brain_features.T
+    logits_per_brain = logits_per_image.T
+
+    # Compute cross-entropy loss
+    batch_size = logits_per_image.shape[0]
+    labels = torch.arange(batch_size, device=image_features.device, dtype=torch.long)
+
+    total_loss = (F.cross_entropy(logits_per_image, labels) + F.cross_entropy(logits_per_brain, labels)) / 2
+
+    return {'loss': total_loss, 'logits_per_brain': logits_per_brain}
+
+
+class EEGEncoderWithLoss(EEGEncoder):
+    def __init__(self, input_length, num_channels, output_dim = 1024, participants_embedding = None, conv_output_dim = 512, conv_kernal_size = 50, transformer_num_layers = 1, transformer_dim_feedforward = 2048, transformer_nhead = 1, transformer_dropout = 0.1, transformer_activation = "relu"):
+        super().__init__(input_length, num_channels, output_dim, participants_embedding, conv_output_dim, conv_kernal_size, transformer_num_layers, transformer_dim_feedforward, transformer_nhead, transformer_dropout, transformer_activation)
+
+        # Initialize logit_scale based on the original CLIP paper
+        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+
+    def loss(self, sub_ids, batch_eeg, image_features):
+        """
+        Computes the loss for the BrainEncoder.
+
+        Args:
+            sub_ids (Tensor): Participant IDs.
+            batch_eeg (Tensor): Batch of EEG data.
+            image_features (Tensor): Image features to compare with brain features.
+
+        Returns:
+            dict: A dictionary containing the loss and logits per brain.
+        """
+        # Get brain features
+        brain_features = self(
+            batch_eeg,
+            sub_ids
+        ).to(image_features.dtype)
+
+        return contrastive_loss(image_features, brain_features, self.logit_scale)        
+
+    @property
+    def device(self):
+        """
+        Returns the device of the model parameters.
+
+        Returns:
+            torch.device: The device of the model parameters.
+        """
+        return next(iter(self.parameters()))[0].device
+    
+
+class ConvEEGEncoderWithLoss(ConvEEGEncoder):
+    def __init__(self, input_length, num_channels, output_dim = 1024, participants_embedding = None, eeg_net_output_dim = 2048, eeg_net_time_kernal = 64):
+        super().__init__(input_length, num_channels, output_dim, participants_embedding, eeg_net_output_dim, eeg_net_time_kernal)
+
+        # Initialize logit_scale based on the original CLIP paper
+        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+
+    def loss(self, sub_ids, batch_eeg, image_features):
+        """
+        Computes the loss for the BrainEncoder.
+
+        Args:
+            sub_ids (Tensor): Participant IDs.
+            batch_eeg (Tensor): Batch of EEG data.
+            image_features (Tensor): Image features to compare with brain features.
+
+        Returns:
+            dict: A dictionary containing the loss and logits per brain.
+        """
+        # Get brain features
+        brain_features = self(
+            batch_eeg,
+            sub_ids
+        ).to(image_features.dtype)
+
+        return contrastive_loss(image_features, brain_features, self.logit_scale)        
+
+    @property
+    def device(self):
+        """
+        Returns the device of the model parameters.
+
+        Returns:
+            torch.device: The device of the model parameters.
+        """
+        return next(iter(self.parameters()))[0].device

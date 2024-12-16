@@ -1,0 +1,43 @@
+# almost everything is copied from improved-dataloader.yaml
+
+wandb_api_key: ec40053455ec5c12dea7d32134b9a23ac16f062e # change it for your own at https://wandb.ai/settings#api
+experiment_name: Sole EEG contrastive
+output_dir: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train/sole_eeg
+log_with: wandb
+resume_from_checkpoint: latest
+gradient_accumulation_steps: 1
+mixed_precision: bf16
+max_train_epochs: 100000
+max_train_steps: 100000
+checkpointing_steps: 1000
+
+model_kwargs:
+    eeg_kwargs:
+        input_length: 525
+        num_channels: 61
+        output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
+        conv_output_dim: 512
+        conv_kernal_size: 50
+        transformer_num_layers: 1
+        transformer_dim_feedforward: 2048
+        transformer_nhead: 1
+        transformer_dropout: 0.1
+        transformer_activation: relu
+
+dataloader_kwargs:
+    dataset:
+        json_path: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/dataset.json
+        recovery_mode: kNN_weighted
+    dataloader:
+        batch_size: 8
+
+optimizer_kwargs:
+    lr: 3e-4
+    betas:
+        - 0.9
+        - 0.999
+    weight_decay: 1e-5
+
+scheduler_kwargs:
+    name: constant
+    warmup_steps: 1000

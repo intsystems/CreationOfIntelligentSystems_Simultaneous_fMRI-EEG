@@ -55,6 +55,7 @@ def main(args):
     
     # load training configuration file
     config_path = os.path.join(args.config_dir, args.config_name)
+    config_name = os.path.splitext(args.config_name)[0]
     config = OmegaConf.load(config_path)
 
     # set up accelerator to process in parallel
@@ -89,7 +90,8 @@ def main(args):
             
             # get combined embeds path
             combined_dir = os.path.join(
-                args.embeds_dir,
+                args.combined_dir,
+                config_name,
                 x['index']['key'],
                 x['index']['sub'],
                 x['index']['ses'],
@@ -116,10 +118,9 @@ def main(args):
                 
     # save scores into {process.index}.json file
     metrics = AutoVivification()
-    name = os.path.splitext(args.config_name)[0]
     for key in scores_dict.keys():
         for sub, scores in scores_dict[key].items():
-            metrics[name][key][sub] = scores
+            metrics[config_name][key][sub] = scores
     process_index = accelerator.process_index
     tmp_dir = os.path.join(args.metrics_dir, 'tmp')
     os.makedirs(tmp_dir, exist_ok=True)
@@ -141,16 +142,16 @@ def main(args):
             merged_metrics = AutoVivification()
             
         # initialize empty lists for all the videos and subs
-        merged_metrics[name] = {key: {sub: [] for sub in list(dataset.data_dict[key].keys())[1:]} for key in dataset.data_dict.keys()}
+        merged_metrics[config_name] = {key: {sub: [] for sub in list(dataset.data_dict[key].keys())[1:]} for key in dataset.data_dict.keys()}
         
         # extend these lists for each process index
         for idx in range(accelerator.num_processes):
             json_path = os.path.join(tmp_dir, f'{idx}.json')
             with open(json_path, 'r') as f:
                 tmp_metrics = json.load(f)
-            for key in tmp_metrics[name].keys():
-                for sub in tmp_metrics[name][key].keys():
-                    merged_metrics[name][key][sub].extend(tmp_metrics[name][key][sub])
+            for key in tmp_metrics[config_name].keys():
+                for sub in tmp_metrics[config_name][key].keys():
+                    merged_metrics[config_name][key][sub].extend(tmp_metrics[config_name][key][sub])
                 
         # dump it to json file
         with open(metrics_path, 'w') as outfile:
@@ -166,6 +167,11 @@ if __name__ == '__main__':
         default='/home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/metrics'
     )
     parser.add_argument(
+        '--combined_dir', 
+        type=str, 
+        default='/home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/combined'
+    )
+    parser.add_argument(
         '--config_dir', 
         type=str, 
         default='/home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train/configs'
@@ -174,11 +180,6 @@ if __name__ == '__main__':
         '--config_name', 
         type=str, 
         default='improved-dataloader.yaml'
-    )
-    parser.add_argument(
-        '--embeds_dir', 
-        type=str, 
-        default='/home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/combined'
     )
     args = parser.parse_args()
     main(args)

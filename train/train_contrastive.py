@@ -67,14 +67,14 @@ if __name__ == '__main__':
     # 2) 'eeg' - we train only EEG encoder
     # 3) 'both' - we train the model on both fMRI and EEG data
     # 4) 'none' - we do not include fMRI and EEG in the data
-    assert config.mode in ['fmri', 'eeg', 'fuse']
+    assert config.mode in ['fmri', 'eeg', 'both', 'none']
 
     # Choose corresponding model class
     if config.mode == 'fmri':
         Model = fMRIBrainEncoder
     elif config.mode == 'eeg':
         Model = EEGBrainEncoder
-    elif config.mode == 'fuse':
+    elif config.mode == 'both':
         Model = BrainEncoder
         
     # Build dataloader

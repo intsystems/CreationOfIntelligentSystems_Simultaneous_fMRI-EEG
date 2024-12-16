@@ -32,7 +32,7 @@ def main(args):
 
     # initialize model and load weights from checkpoint
     model = BrainEncoder(**config.model_kwargs).to(device).to(weight_dtype)
-    ckpt_path = os.path.join(config.output_dir, 'checkpoints', f'checkpoint-{args.steps}', 'model.safetensors')
+    ckpt_path = os.path.join(config.output_dir, f'checkpoint-{args.steps}', 'model.safetensors')
     load_model(model, ckpt_path)
 
     # initialize dataset

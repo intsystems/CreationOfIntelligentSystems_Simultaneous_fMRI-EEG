@@ -15,6 +15,7 @@ from torchvision import transforms
 import json
 import random
 from channel_recovery import ChannelRecovering
+from typing import Optional
 
 
 def load_json_data(json_path):
@@ -28,11 +29,13 @@ class BrainStimuliDataset(Dataset):
         self, 
         json_path, 
         recovery_mode: str = "zeros", 
-        mode: str = "both"
+        mode: str = "both",
+        featured_videos: Optional[list[str]] = None,
+        featured_subs: Optional[list[str]] = None
     ):
         self.json_path = json_path
         self.recovery_mode = recovery_mode
-        self.data_dict = load_json_data(json_path)
+        self.data_dict = self.filter_data_dict(load_json_data(json_path))
         self.calculane_num_subs()
         self.calculate_length()
         # union of all the available channels in EEG experiments
@@ -54,6 +57,20 @@ class BrainStimuliDataset(Dataset):
             drop_fmri=self.drop_fmri,
             drop_eeg=self.drop_eeg,
         )
+        
+    @staticmethod
+    def filter_data_dict(
+        data_dict,
+        featured_videos: Optional[list[str]] = None,
+        featured_subs: Optional[list[str]] = None
+    ):
+        """Filter dataset with `featured_videos` and `featured_subs`."""
+        if featured_videos is not None:
+            data_dict = {k: v for k, v in data_dict.items() if k in featured_videos}
+        if featured_subs is not None:
+            for key in data_dict.keys():
+                data_dict[key] = {k: v for k, v in data_dict[key].items() if k in ['frames_dir', *featured_subs]}
+        return data_dict
     
     def get_data_from_index(self, idx):
         """Should be enhanced for multiple indices, as it is called during the `self.__getitem__()`"""

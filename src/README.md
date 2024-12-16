@@ -11,7 +11,12 @@ This repository contains source code for different parts of our model.
 
 ## Usage
 
-The only script in this directory you can run is `calculate_combined.py`, and you can do it as follows:
+There are some scripts you can run as follows:
+
 ```bash
+# calculate combined embeds for each chunk in dataset
 accelerate launch calculate_combined.py
+
+# calculate CLIP-Score for each chunk in dataset
+accelerate launch calculate_clip_score.py
 ```

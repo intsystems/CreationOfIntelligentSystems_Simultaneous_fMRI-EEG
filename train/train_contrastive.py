@@ -18,7 +18,8 @@ from dataset import (
     BrainStimuliDataset,
     BrainStimuliDataLoader
 )
-from brain_encoder import BrainEncoder
+from brain_encoder import fMRIBrainEncoder, EEGBrainEncoder, BrainEncoder
+from utils import get_model_size_mb
 
 import wandb
 
@@ -61,12 +62,38 @@ if __name__ == '__main__':
     elif accelerator.mixed_precision == "bf16":
         weight_dtype = torch.bfloat16
 
-    # Initialize the model and move it to the appropriate device and data type
-    model = BrainEncoder(**config.model_kwargs).to(accelerator.device).to(weight_dtype)
-    
+    # Check training mode
+    # 1) 'fmri' - we train only fMRI encoder
+    # 2) 'eeg' - we train only EEG encoder
+    # 3) 'both' - we train the model on both fMRI and EEG data
+    # 4) 'none' - we do not include fMRI and EEG in the data
+    assert config.mode in ['fmri', 'eeg', 'fuse']
+
+    # Choose corresponding model class
+    if config.mode == 'fmri':
+        Model = fMRIBrainEncoder
+    elif config.mode == 'eeg':
+        Model = EEGBrainEncoder
+    elif config.mode == 'fuse':
+        Model = BrainEncoder
+        
     # Build dataloader
-    dataset = BrainStimuliDataset(**config.dataloader_kwargs.dataset)
-    dataloader = BrainStimuliDataLoader(dataset, **config.dataloader_kwargs.dataloader)
+    dataset = BrainStimuliDataset(**config.dataloader_kwargs.dataset, mode=config.mode)
+    dataloader = BrainStimuliDataLoader(dataset, **config.dataloader_kwargs.dataloader, mode=config.mode)
+        
+    # Initialize the model and move it to the appropriate device and data type
+    model = Model(**config.model_kwargs, num_subs=dataset.num_subs).to(accelerator.device).to(weight_dtype)
+
+    # Calculating model size
+    # ----------------------
+    # print(f'====> Model size: {get_model_size_mb(model):.1f} MB')
+    # EEG
+    # print(f'eeg_participants_embedding size: {get_model_size_mb(model.eeg_participants_embedding):.1f} MB')
+    # print(f'EEGEncoder size: {get_model_size_mb(model.EEGEncoder):.1f} MB')
+    # fMRI
+    # print(f'RidgeRegression size: {get_model_size_mb(model.RidgeRegression):.1f} MB')
+    # print(f'fMRIEncoder size: {get_model_size_mb(model.fMRIEncoder):.1f} MB')
+    # ----------------------
 
     # Initialize the optimizer
     optimizer = optim.AdamW(model.parameters(), **config.optimizer_kwargs)
@@ -125,8 +152,14 @@ if __name__ == '__main__':
             with accelerator.accumulate(model):
                 # Extract data from the batch
                 sub_ids = batch["id"].to(accelerator.device)
-                batch_eeg = batch["eeg"].to(weight_dtype).to(accelerator.device)
-                batch_fmri = batch["fmri"].to(weight_dtype).to(accelerator.device)
+                if batch["eeg"] is not None: # we drop eeg data when training only fmri encoder
+                    batch_eeg = batch["eeg"].to(weight_dtype).to(accelerator.device)
+                else:
+                    batch_eeg = None
+                if batch["fmri"] is not None: # we drop fmri data when training only eeg encoder
+                    batch_fmri = batch["fmri"].to(weight_dtype).to(accelerator.device)
+                else:
+                    batch_fmri = None
                 image_features = batch["frames"].to(weight_dtype).to(accelerator.device)
                 image_features = select_random_dimension(image_features)
 
@@ -170,8 +203,9 @@ if __name__ == '__main__':
                     # Save checkpoints periodically
                     if global_step % config.checkpointing_steps == 0:
                         if accelerator.is_main_process:
-                            save_path = os.path.join(config.output_dir, f"checkpoint-{global_step}")
+                            save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
                             accelerator.save_state(save_path)
+                            logger.info(f"Saved state to {save_path}")
 
             # Break the loop if the maximum number of training steps is reached
             if global_step >= config.max_train_steps:

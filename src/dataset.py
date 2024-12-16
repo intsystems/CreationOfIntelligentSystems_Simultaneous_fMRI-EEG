@@ -155,26 +155,6 @@ class BrainStimuliDataset(Dataset):
                 raw_egg_with_nans,
                 nan_ids
             )
-                        
-    def insert_zero_rows_in_array(self, raw_data):
-        """Sort channels in `raw_data`, and then insert zero rows for channels that are not included in `raw_data.ch_names`"""
-        raw_data_ordered = raw_data.reorder_channels(sorted(list(set(self.eeg_channels_ordered) & set(raw_data.ch_names))))
-        current_channels_ordered = raw_data_ordered.ch_names
-        good_indices = []
-        i = 0
-        j = 0
-        while i < len(current_channels_ordered) and j < len(self.eeg_channels_ordered):
-            if current_channels_ordered[i] == self.eeg_channels_ordered[j]:
-                good_indices.append(j)    
-                i += 1
-                j += 1
-            else:
-                j += 1
-        raw_data_array = raw_data_ordered.get_data()
-        raw_data_array_with_inserted_zero_rows = np.zeros((len(self.eeg_channels_ordered), raw_data_array.shape[1]))
-        for i, idx in enumerate(good_indices):
-            raw_data_array_with_inserted_zero_rows[idx] = raw_data_array[i]
-        return raw_data_array_with_inserted_zero_rows
     
 
 def collate_fn(data):
@@ -271,6 +251,9 @@ class BrainStimuliDataLoader:
                 run = random.choice(run_list)
                 # sample random chunk, **that was not used before**
                 chunk_list = list(self.data_dict[key][sub][ses][run]['chunks'].keys())
+                # fix case when batch size > len(chunk_list)
+                if len(list(set(chunk_list) - set(chunk_indices))) == 0:
+                    chunk_indices = []
                 chunk = random.choice(list(set(chunk_list) - set(chunk_indices)))
                 chunk_indices.append(chunk)
                 # append this chunk into batch

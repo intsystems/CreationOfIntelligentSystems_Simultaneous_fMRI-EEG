@@ -32,7 +32,7 @@ def main(args):
 
     # initialize model and load weights from checkpoint
     model = BrainEncoder(**config.model_kwargs).to(device).to(weight_dtype)
-    ckpt_path = os.path.join(config.output_dir, f'checkpoint-{args.steps}', 'model.safetensors')
+    ckpt_path = os.path.join(config.output_dir, 'checkpoints', f'checkpoint-{args.steps}', 'model.safetensors')
     load_model(model, ckpt_path)
 
     # initialize dataset
@@ -73,7 +73,7 @@ def main(args):
             
             # update progress bar
             if accelerator.is_main_process:
-                    pbar.update(accelerator.num_processes)
+                pbar.update(accelerator.num_processes)
                 
             
 if __name__ == '__main__':

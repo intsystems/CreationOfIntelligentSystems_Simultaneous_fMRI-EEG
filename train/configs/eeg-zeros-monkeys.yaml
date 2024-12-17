@@ -19,9 +19,9 @@ model_kwargs:
         output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
         conv_output_dim: 512
         conv_kernal_size: 50
-        transformer_num_layers: 8
+        transformer_num_layers: 1
         transformer_dim_feedforward: 2048
-        transformer_nhead: 5
+        transformer_nhead: 1
         transformer_dropout: 0.1
         transformer_activation: relu
 

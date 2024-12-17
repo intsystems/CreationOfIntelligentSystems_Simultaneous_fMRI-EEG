@@ -1,6 +1,6 @@
 wandb_api_key: ec40053455ec5c12dea7d32134b9a23ac16f062e # change it for your own at https://wandb.ai/settings#api
 experiment_name: Simultaneous fMRI-EEG
-output_dir: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train/diffusion-prior
+output_dir: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train/checkpoints/diffusion-prior
 log_with: wandb
 resume_from_checkpoint: latest
 gradient_accumulation_steps: 1

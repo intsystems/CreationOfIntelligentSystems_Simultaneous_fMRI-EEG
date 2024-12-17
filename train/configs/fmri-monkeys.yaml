@@ -1,0 +1,49 @@
+wandb_api_key: ec40053455ec5c12dea7d32134b9a23ac16f062e # change it for your own at https://wandb.ai/settings#api
+experiment_name: Simultaneous fMRI-EEG
+output_dir: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train/checkpoints/fmri-monkeys
+log_with: wandb
+resume_from_checkpoint: latest
+gradient_accumulation_steps: 1
+mixed_precision: bf16
+max_train_epochs: 100000
+max_train_steps: 100000
+checkpointing_steps: 1000
+
+mode: fmri
+
+model_kwargs:
+
+    ridge_kwargs:
+        masks_path: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/natview/fmri_masks
+        out_dim: 4096 # = fmri_kwargs.latent_dim
+
+    fmri_kwargs:
+        latent_dim: 4096 # = ridge_kwargs.out_dim
+        patch_size: 16
+        embed_dim: 1024 # = eeg_kwargs.output_dim = fuser_kwargs.emb_dim
+        in_chans: 1
+        depth: 8
+        num_heads: 8
+        mlp_ratio: 4
+        dropout: 0.1
+
+dataloader_kwargs:
+    dataset:
+        json_path: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/dataset.json
+        featured_videos: 
+            - monkey1
+            - monkey2
+            - monkey5
+    dataloader:
+        batch_size: 8
+
+optimizer_kwargs:
+    lr: 3e-4
+    betas:
+        - 0.9
+        - 0.999
+    weight_decay: 1e-5
+
+scheduler_kwargs:
+    name: constant
+    warmup_steps: 1000

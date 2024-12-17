@@ -203,9 +203,8 @@ if __name__ == '__main__':
                     # Save checkpoints periodically
                     if global_step % config.checkpointing_steps == 0:
                         if accelerator.is_main_process:
-                            save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
+                            save_path = os.path.join(config.output_dir, f"checkpoint-{global_step}")
                             accelerator.save_state(save_path)
-                            logger.info(f"Saved state to {save_path}")
 
             # Break the loop if the maximum number of training steps is reached
             if global_step >= config.max_train_steps:

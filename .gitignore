@@ -3,6 +3,7 @@
 *.pkl
 wandb/
 code/data/combined
+code/data/metrics
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

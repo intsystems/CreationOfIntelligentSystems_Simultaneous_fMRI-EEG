@@ -1,0 +1,48 @@
+wandb_api_key: ec40053455ec5c12dea7d32134b9a23ac16f062e # change it for your own at https://wandb.ai/settings#api
+experiment_name: Simultaneous fMRI-EEG
+output_dir: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train/checkpoints/eeg-zeros
+log_with: wandb
+resume_from_checkpoint: latest
+gradient_accumulation_steps: 1
+mixed_precision: bf16
+max_train_epochs: 100000
+max_train_steps: 100000
+checkpointing_steps: 50
+
+mode: eeg
+
+model_kwargs:
+
+    eeg_kwargs:
+        input_length: 525 # should be divisible by `transformer_nhead`
+        num_channels: 61
+        output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
+        conv_output_dim: 512
+        conv_kernal_size: 50
+        transformer_num_layers: 8
+        transformer_dim_feedforward: 2048
+        transformer_nhead: 5
+        transformer_dropout: 0.1
+        transformer_activation: relu
+
+dataloader_kwargs:
+    dataset:
+        json_path: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/dataset.json
+        recovery_mode: zeros
+        featured_videos: 
+            - monkey1
+            - monkey2
+            - monkey5
+    dataloader:
+        batch_size: 1024
+
+optimizer_kwargs:
+    lr: 3e-4
+    betas:
+        - 0.9
+        - 0.999
+    weight_decay: 1e-5
+
+scheduler_kwargs:
+    name: constant
+    warmup_steps: 1000

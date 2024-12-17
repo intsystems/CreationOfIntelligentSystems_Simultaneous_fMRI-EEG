@@ -35,7 +35,11 @@ class BrainStimuliDataset(Dataset):
     ):
         self.json_path = json_path
         self.recovery_mode = recovery_mode
-        self.data_dict = self.filter_data_dict(load_json_data(json_path))
+        self.data_dict = self.filter_data_dict(
+            data_dict=load_json_data(json_path),
+            featured_videos=featured_videos,
+            featured_subs=featured_subs
+        )
         self.calculane_num_subs()
         self.calculate_length()
         # union of all the available channels in EEG experiments

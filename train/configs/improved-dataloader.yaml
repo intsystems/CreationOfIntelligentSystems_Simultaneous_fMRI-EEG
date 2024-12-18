@@ -29,13 +29,13 @@ model_kwargs:
         input_length: 525
         num_channels: 61
         output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
-        conv_output_dim: 512
+        conv_output_dim: 1800
         conv_kernal_size: 50
         transformer_num_layers: 1
-        transformer_dim_feedforward: 2048
-        transformer_nhead: 1
-        transformer_dropout: 0.1
-        transformer_activation: relu
+        transformer_dim_feedforward: 256
+        transformer_nhead: 4
+        transformer_dropout: 0.25
+        transformer_activation: gelu
         
     fuser_kwargs:
         fuser_name: weight # or mlp, and then emb_dim is required

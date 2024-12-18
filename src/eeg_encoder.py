@@ -15,34 +15,34 @@ class SpatioChannelConv(nn.Module):
             self,
             input_length: int,
             num_channels: int,
-            output_dim: int,
-            kernal_size: int
+            output_dim: int = None,
+            kernal_size: int = None
     ):
         super().__init__()
 
-        # compute the stride for time convolutions so the time dim will be almost wrapped after
-        stride = self._compute_stride(input_length, kernal_size)
-
         self.time_conv = nn.Sequential(
-            nn.Conv2d(1, output_dim // 2, (1 ,kernal_size), (1, stride)),
-            nn.AvgPool2d((1 ,kernal_size), (1, stride))
+            nn.Conv2d(1, 20, (1 ,25), (1, 1)),
+            nn.AvgPool2d((1 ,51), (1, 5))
         )
 
         self.channel_conv = nn.Sequential(
-            nn.BatchNorm2d(output_dim // 2),
+            nn.BatchNorm2d(20),
             nn.ELU(),
-            nn.Conv2d(output_dim // 2, output_dim, (num_channels, 1)),
+            nn.Conv2d(20, 20, (num_channels, 1)),
             nn.ELU(),
             nn.Dropout(0.5),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """ The model is oriented around precise input_length and num channels of our task.
+            After the time conv we have untouched chaneel dimension and time dim = 90.
+            After the channel conv we have untouched time dim and fully convolved channel dim.
+            The final output dim = 1800.
+        """
         # add feature maps dimension
         x.unsqueeze_(dim=1)
         # apply time convolutions
         x = self.time_conv(x)
-        # average the remained time dimension
-        x = torch.mean(x, dim=3, keepdim=True)
         # apply channel convolutions
         x = self.channel_conv(x)
         # flatten the output so it becomes a vector
@@ -50,17 +50,6 @@ class SpatioChannelConv(nn.Module):
 
         return x
 
-    def _compute_stride(self, input_length: int, kernal_size: int) -> int:
-        """ Computes the stride parameter for time convolutions so that the time dimension
-             of the input is almost wrapped after applying one convolution and one average pooling
-             with given kernal_size
-        """
-        # the result is a root of the quadratic equation
-        discriminant = (kernal_size - 1) ** 2 - 4 * (kernal_size - 1 - input_length)
-        return int(
-            (1 - kernal_size + math.sqrt(discriminant)) / 2
-        )
-    
 
 class ResidualMlpProjector(nn.Module):
     """ Input is projected to output dim and then transforms as x = x + f(x)
@@ -97,8 +86,8 @@ class EEGEncoder(nn.Module):
             num_channels: int,
             output_dim: int = 1024,
             participants_embedding: nn.Embedding = None,
-            conv_output_dim: int = 512,
-            conv_kernal_size: int = 50,
+            conv_output_dim: int = 1800,
+            conv_kernal_size: int = None,
             transformer_num_layers: int = 1,
             transformer_dim_feedforward: int = 2048,
             transformer_nhead: int = 1,

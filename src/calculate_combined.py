@@ -17,6 +17,7 @@ def main(args):
     
     # load training configuration file
     config_path = os.path.join(args.config_dir, args.config_name)
+    config_name = os.path.splitext(args.config_name)[0]
     config = OmegaConf.load(config_path)
 
     # set up accelerator to process in parallel
@@ -62,6 +63,7 @@ def main(args):
             # save combined embeds
             combined_dir = os.path.join(
                 args.save_dir,
+                name,
                 x['index']['key'],
                 x['index']['sub'],
                 x['index']['ses'],
@@ -73,7 +75,7 @@ def main(args):
             
             # update progress bar
             if accelerator.is_main_process:
-                    pbar.update(accelerator.num_processes)
+                pbar.update(accelerator.num_processes)
                 
             
 if __name__ == '__main__':

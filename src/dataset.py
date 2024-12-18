@@ -15,6 +15,7 @@ from torchvision import transforms
 import json
 import random
 from channel_recovery import ChannelRecovering
+from typing import Optional
 
 
 def load_json_data(json_path):
@@ -24,10 +25,18 @@ def load_json_data(json_path):
 
 
 class BrainStimuliDataset(Dataset):
-    def __init__(self, json_path, recovery_mode: str = "zeros"):
+    def __init__(
+        self, 
+        json_path, 
+        recovery_mode: str = "zeros", 
+        mode: str = "both",
+        featured_videos: Optional[list[str]] = None,
+        featured_subs: Optional[list[str]] = None
+    ):
         self.json_path = json_path
         self.recovery_mode = recovery_mode
-        self.data_dict = load_json_data(json_path)
+        self.data_dict = self.filter_data_dict(load_json_data(json_path))
+        self.calculane_num_subs()
         self.calculate_length()
         # union of all the available channels in EEG experiments
         self.eeg_channels_ordered = [
@@ -38,10 +47,30 @@ class BrainStimuliDataset(Dataset):
             'Oz', 'P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'PO3', 'PO4',
             'PO7', 'PO8', 'POz', 'Pz', 'T7', 'T8', 'TP10', 'TP7', 'TP8', 'TP9'
         ]
+        self.drop_fmri = mode in ['none', 'eeg']
+        self.drop_eeg = mode in ['none', 'fmri']
         
     def __getitem__(self, index):
         data = self.get_data_from_index(index)
-        return self.process_data(data)
+        return self.process_data(
+            data=data,
+            drop_fmri=self.drop_fmri,
+            drop_eeg=self.drop_eeg,
+        )
+        
+    @staticmethod
+    def filter_data_dict(
+        data_dict,
+        featured_videos: Optional[list[str]] = None,
+        featured_subs: Optional[list[str]] = None
+    ):
+        """Filter dataset with `featured_videos` and `featured_subs`."""
+        if featured_videos is not None:
+            data_dict = {k: v for k, v in data_dict.items() if k in featured_videos}
+        if featured_subs is not None:
+            for key in data_dict.keys():
+                data_dict[key] = {k: v for k, v in data_dict[key].items() if k in ['frames_dir', *featured_subs]}
+        return data_dict
     
     def get_data_from_index(self, idx):
         """Should be enhanced for multiple indices, as it is called during the `self.__getitem__()`"""
@@ -64,20 +93,31 @@ class BrainStimuliDataset(Dataset):
                             current_index -= count
                             continue
         
-    def process_data(self, data):
+    def process_data(
+        self, 
+        data, 
+        drop_fmri: bool = False, 
+        drop_eeg: bool = False
+    ):
         # sub id
         _, sep, after = data['nifti_path'].partition('natview')
         id = int((sep + after).split('/')[2].split('-')[1]) - 1
         # fmri
-        nii_img = nib.load(data['nifti_path'])
-        fmri_data = nii_img.get_fdata()
-        fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
-        fmri = torch.from_numpy(fmri)
+        if not drop_fmri:
+            nii_img = nib.load(data['nifti_path'])
+            fmri_data = nii_img.get_fdata()
+            fmri = fmri_data[:, :, :, data['time_indices']['fmri']['idx']]
+            fmri = torch.from_numpy(fmri)
+        else:
+            fmri = None
         # eeg
-        raw_data = read_raw_eeglab(data['eeglab_path'])
-        eeg_data = self.recover_eeg(raw_data)
-        eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
-        eeg = torch.from_numpy(eeg)
+        if not drop_eeg:
+            raw_data = read_raw_eeglab(data['eeglab_path'])
+            eeg_data = self.recover_eeg(raw_data)
+            eeg = eeg_data[:, data['time_indices']['eeg']['start_idx']:data['time_indices']['eeg']['end_idx']+1]
+            eeg = torch.from_numpy(eeg)
+        else:
+            eeg = None
         # frames
         frames_paths = [f"frame_{frame_idx:04d}.pt" for frame_idx in
                        range(data['time_indices']['frames']['start_idx'], data['time_indices']['frames']['end_idx']+1)]
@@ -91,6 +131,12 @@ class BrainStimuliDataset(Dataset):
             'frames': frames,
             'frame_paths': [os.path.join(data['frames_dir'], path) for path in frames_paths]
         }
+        
+    def calculane_num_subs(self):
+        num_subs = 0
+        for key in self.data_dict.keys():
+            num_subs = max(num_subs, len(list(self.data_dict[key].keys())[1:]))
+        self.num_subs = num_subs
         
     def calculate_length(self):
         count = 0
@@ -126,26 +172,6 @@ class BrainStimuliDataset(Dataset):
                 raw_egg_with_nans,
                 nan_ids
             )
-                        
-    def insert_zero_rows_in_array(self, raw_data):
-        """Sort channels in `raw_data`, and then insert zero rows for channels that are not included in `raw_data.ch_names`"""
-        raw_data_ordered = raw_data.reorder_channels(sorted(list(set(self.eeg_channels_ordered) & set(raw_data.ch_names))))
-        current_channels_ordered = raw_data_ordered.ch_names
-        good_indices = []
-        i = 0
-        j = 0
-        while i < len(current_channels_ordered) and j < len(self.eeg_channels_ordered):
-            if current_channels_ordered[i] == self.eeg_channels_ordered[j]:
-                good_indices.append(j)    
-                i += 1
-                j += 1
-            else:
-                j += 1
-        raw_data_array = raw_data_ordered.get_data()
-        raw_data_array_with_inserted_zero_rows = np.zeros((len(self.eeg_channels_ordered), raw_data_array.shape[1]))
-        for i, idx in enumerate(good_indices):
-            raw_data_array_with_inserted_zero_rows[idx] = raw_data_array[i]
-        return raw_data_array_with_inserted_zero_rows
     
 
 def collate_fn(data):
@@ -156,8 +182,14 @@ def collate_fn(data):
     frames_list = [x['frames'] for x in data]
     # stack tensors
     id_tensor = torch.tensor(id_list)
-    fmri_tensor = torch.stack(fmri_list)
-    eeg_tensor = torch.stack(eeg_list)
+    if None in fmri_list: # we drop fmri data when training only eeg encoder
+        fmri_tensor = None
+    else:
+        fmri_tensor = torch.stack(fmri_list)
+    if None in eeg_list: # we drop fmri data when training only eeg encoder
+        eeg_tensor = None
+    else:
+        eeg_tensor = torch.stack(eeg_list)
     frames_tensor = torch.stack(frames_list)
     return {
         'id': id_tensor,
@@ -205,10 +237,17 @@ def select_random_dimension(batch):
 
 
 class BrainStimuliDataLoader:
-    def __init__(self, dataset, batch_size):
+    def __init__(
+        self, 
+        dataset, 
+        batch_size, 
+        mode: str = "both"
+    ):
         self.batch_size = batch_size
         self.data_dict = dataset.data_dict
         self.process_data = dataset.process_data
+        self.drop_fmri = mode in ['none', 'eeg']
+        self.drop_eeg = mode in ['none', 'fmri']
 
     def __iter__(self):
         batch = []
@@ -229,15 +268,23 @@ class BrainStimuliDataLoader:
                 run = random.choice(run_list)
                 # sample random chunk, **that was not used before**
                 chunk_list = list(self.data_dict[key][sub][ses][run]['chunks'].keys())
+                # fix case when batch size > len(chunk_list)
+                if len(list(set(chunk_list) - set(chunk_indices))) == 0:
+                    chunk_indices = []
                 chunk = random.choice(list(set(chunk_list) - set(chunk_indices)))
                 chunk_indices.append(chunk)
                 # append this chunk into batch
-                batch.append(self.process_data({
-                    'frames_dir': self.data_dict[key]['frames_dir'],
-                    'nifti_path': self.data_dict[key][sub][ses][run]['nifti_path'],
-                    'eeglab_path': self.data_dict[key][sub][ses][run]['eeglab_path'],
-                    'time_indices': self.data_dict[key][sub][ses][run]['chunks'][chunk]
-                }))
+                batch.append(self.process_data(
+                    data={
+                        'frames_dir': self.data_dict[key]['frames_dir'],
+                        'index': {'key': key, 'sub': sub, 'ses': ses, 'run': run, 'chunk': chunk},
+                        'nifti_path': self.data_dict[key][sub][ses][run]['nifti_path'],
+                        'eeglab_path': self.data_dict[key][sub][ses][run]['eeglab_path'],
+                        'time_indices': self.data_dict[key][sub][ses][run]['chunks'][chunk]
+                    },
+                    drop_fmri=self.drop_fmri,
+                    drop_eeg=self.drop_eeg                               
+                ))
                 
         yield collate_fn(batch)
         

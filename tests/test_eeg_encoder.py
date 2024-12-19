@@ -34,8 +34,8 @@ def test_spatio_channel_conv_shapes(model_config_setup):
     )
 
     # check final stride for the convolutions
-    print("Stride =", net._compute_stride(config["input_length"],  config["conv_kernal_size"]))
-    print("Kernal =", config["conv_kernal_size"])
+    # print("Stride =", net._compute_stride(config["input_length"],  config["conv_kernal_size"]))
+    # print("Kernal =", config["conv_kernal_size"])
 
     model_input = torch.rand((2, config["num_channels"], config["input_length"]))
     model_output = net(model_input)

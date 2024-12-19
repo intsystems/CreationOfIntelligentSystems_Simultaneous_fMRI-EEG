@@ -20,15 +20,17 @@ class SpatioChannelConv(nn.Module):
     ):
         super().__init__()
 
+        NUM_CHANNELS = 20
+
         self.time_conv = nn.Sequential(
-            nn.Conv2d(1, 20, (1 ,25), (1, 1)),
+            nn.Conv2d(1, NUM_CHANNELS, (1 ,25), (1, 1)),
             nn.AvgPool2d((1 ,51), (1, 5))
         )
 
         self.channel_conv = nn.Sequential(
-            nn.BatchNorm2d(20),
+            nn.BatchNorm2d(NUM_CHANNELS),
             nn.ELU(),
-            nn.Conv2d(20, 20, (num_channels, 1)),
+            nn.Conv2d(NUM_CHANNELS, NUM_CHANNELS, (num_channels, 1)),
             nn.ELU(),
             nn.Dropout(0.5),
         )
@@ -37,7 +39,7 @@ class SpatioChannelConv(nn.Module):
         """ The model is oriented around precise input_length and num channels of our task.
             After the time conv we have untouched chaneel dimension and time dim = 90.
             After the channel conv we have untouched time dim and fully convolved channel dim.
-            The final output dim = 1800.
+            The final output dim = 1820.
         """
         # add feature maps dimension
         x.unsqueeze_(dim=1)

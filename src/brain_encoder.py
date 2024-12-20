@@ -107,7 +107,7 @@ class BrainEncoder(BaseBrainEncoder):
         else:
             raise NotImplementedError(f"Fuser type {fuser_name} is not implemented")
 
-    def forward(self, sub_ids, batch_eeg, batch_fmri):
+    def forward(self, sub_ids, batch_eeg, batch_fmri, image_features: torch.Tensor = None):
         """
         Forward pass of the BrainEncoder.
 
@@ -176,7 +176,7 @@ class fMRIBrainEncoder(BaseBrainEncoder):
         self.RidgeRegression = RidgeRegression(**ridge_kwargs)
         self.fMRIEncoder = fMRIEncoder(**fmri_kwargs)
 
-    def forward(self, sub_ids, batch_fmri):
+    def forward(self, sub_ids, batch_fmri, batch_eeg: torch.Tensor = None, image_features: torch.Tensor = None):
         """
         Forward pass of the fMRIBrainEncoder.
 
@@ -237,7 +237,7 @@ class EEGBrainEncoder(BaseBrainEncoder):
             **eeg_kwargs
         )
 
-    def forward(self, sub_ids, batch_eeg):
+    def forward(self, sub_ids, batch_eeg, batch_fmri: torch.Tensor = None, image_features: torch.Tensor = None):
         """
         Forward pass of the EEGBrainEncoder.
 

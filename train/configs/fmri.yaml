@@ -22,14 +22,18 @@ model_kwargs:
         patch_size: 16
         embed_dim: 1024 # = eeg_kwargs.output_dim = fuser_kwargs.emb_dim
         in_chans: 1
-        depth: 1
-        num_heads: 1
-        mlp_ratio: 1
+        depth: 8
+        num_heads: 8
+        mlp_ratio: 4
         dropout: 0.1
 
 dataloader_kwargs:
     dataset:
         json_path: /home/jovyan/shares/SR004.nfs2/nkiselev/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/dataset.json
+        featured_videos: 
+            - monkey1
+            - monkey2
+            - monkey5
     dataloader:
         batch_size: 8
 

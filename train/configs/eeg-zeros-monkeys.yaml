@@ -7,7 +7,7 @@ gradient_accumulation_steps: 1
 mixed_precision: bf16
 max_train_epochs: 100000
 max_train_steps: 100000
-checkpointing_steps: 50
+checkpointing_steps: 1000
 
 mode: eeg
 
@@ -17,10 +17,10 @@ model_kwargs:
         input_length: 525
         num_channels: 61
         output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
-        conv_output_dim: 1800
+        conv_output_dim: 1820
         conv_kernal_size: 50
-        transformer_num_layers: 1
-        transformer_dim_feedforward: 256
+        transformer_num_layers: 16
+        transformer_dim_feedforward: 526
         transformer_nhead: 5
         transformer_dropout: 0.25
         transformer_activation: gelu
@@ -34,7 +34,7 @@ dataloader_kwargs:
             - monkey2
             - monkey5
     dataloader:
-        batch_size: 1024
+        batch_size: 8
 
 optimizer_kwargs:
     lr: 3e-4

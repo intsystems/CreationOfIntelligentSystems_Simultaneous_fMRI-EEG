@@ -91,7 +91,6 @@ class DiffusionPrior:
 
         # 1. Prepare timesteps
         from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import retrieve_timesteps
-        print('num_inference_steps:', num_inference_steps)
         timesteps, num_inference_steps = retrieve_timesteps(scheduler=self.scheduler, num_inference_steps=num_inference_steps, device=self.device, timesteps=timesteps)
 
         # 2. Prepare combined_embeds

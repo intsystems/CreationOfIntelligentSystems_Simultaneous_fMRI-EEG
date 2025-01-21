@@ -21,38 +21,38 @@ def prepare_embedding_paths(json_path, combined_dir):
                 for run in data_dict[key][sub][ses].keys():
                     for chunk_idx in data_dict[key][sub][ses][run]['chunks'].keys():
                         
-                        try:
-                            # make path to combined embeds
-                            combined_path = os.path.join(
-                                combined_dir,
-                                key,
-                                sub,
-                                ses,
-                                run,
-                                f'chunk-{chunk_idx}.pt'
-                            )
-        
-                            # get time indices for frames
-                            time_indices = data_dict[key][sub][ses][run]['chunks'][chunk_idx]['frames']
-                            
-                            # make path to image embeds
-                            frame_paths = [
-                                os.path.join(
-                                    data_dict[key]['frames_dir'],
-                                    f'frame_{frame_idx:04d}.pt'
-                                )
-                                for frame_idx in
-                                range(time_indices['start_idx'], time_indices['end_idx'] + 1)
-                            ]
-                            
-                            # append paths to list
-                            embedding_paths.append({
-                                'combined': combined_path,
-                                'image': frame_paths
-                            })
-                            
-                        except FileNotFoundError:
+                        # make path to combined embeds
+                        combined_path = os.path.join(
+                            combined_dir,
+                            key,
+                            sub,
+                            ses,
+                            run,
+                            f'chunk-{chunk_idx}.pt'
+                        )
+                        
+                        # check if the combined embeds exists
+                        if not os.path.exists(combined_path):
                             continue
+    
+                        # get time indices for frames
+                        time_indices = data_dict[key][sub][ses][run]['chunks'][chunk_idx]['frames']
+                        
+                        # make path to image embeds
+                        frame_paths = [
+                            os.path.join(
+                                data_dict[key]['frames_dir'],
+                                f'frame_{frame_idx:04d}.pt'
+                            )
+                            for frame_idx in
+                            range(time_indices['start_idx'], time_indices['end_idx'] + 1)
+                        ]
+                        
+                        # append paths to list
+                        embedding_paths.append({
+                            'combined': combined_path,
+                            'image': frame_paths
+                        })
                         
     return embedding_paths
 

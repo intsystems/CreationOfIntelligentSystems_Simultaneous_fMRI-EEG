@@ -34,7 +34,7 @@ dataloader_kwargs:
             - monkey2
             - monkey5
     dataloader:
-        batch_size: 8
+        batch_size: 64
 
 optimizer_kwargs:
     lr: 3e-4

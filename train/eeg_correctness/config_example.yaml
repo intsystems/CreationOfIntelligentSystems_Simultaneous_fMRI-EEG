@@ -1,5 +1,3 @@
-# almost everything is copied from improved-dataloader.yaml
-
 wandb_api_key:  # change it for your own at https://wandb.ai/settings#api
 output_dir: 
 max_train_epochs: 

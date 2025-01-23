@@ -8,6 +8,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
+import sys
+sys.path.append("../../src")
 from eeg_encoder import EEGEncoder
 import data_utils
 
@@ -111,7 +113,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # load config file
-    config = OmegaConf.load(args["config_path"])
+    config = OmegaConf.load(args.config_path)
 
     logger = WandbLogger(
         project="EEG Debug",
@@ -133,7 +135,7 @@ if __name__ == '__main__':
     )
 
     # configure special samplers to assure batch diversity for CLIP-loss
-    if config.num_gpus == 1:
+    if config.num_devices == 1:
         train_sampler = data_utils.ClipSampler(train_dataset)
         test_sampler = data_utils.ClipSampler(test_dataset)
     else:
@@ -151,7 +153,7 @@ if __name__ == '__main__':
         sampler=test_sampler
     )
 
-    # create lightning model
+    # create lightning model and trainer
     model = LitEggEncoder(
         EEGEncoder(**config.eeg_kwargs),
         nn.Parameter(torch.FloatTensor([config.init_logit_scale])),

@@ -1,0 +1,42 @@
+# almost everything is copied from improved-dataloader.yaml
+
+wandb_api_key:  # change it for your own at https://wandb.ai/settings#api
+output_dir: 
+max_train_epochs: 
+max_train_steps: 
+checkpointing_steps: 
+
+experiment_name: Sole EEG contrastive
+
+img_latent_train_path: 
+img_latent_test_path: 
+subs_dir_path: 
+
+max_epochs: 1
+accelerator: "gpu"
+num_devices: 1
+batch_size: 1
+
+eeg_kwargs:
+    input_length: 250
+    num_channels: 63
+    output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
+    conv_output_dim: 512
+    conv_kernal_size: 50
+    transformer_num_layers: 1
+    transformer_dim_feedforward: 2048
+    transformer_nhead: 1
+    transformer_dropout: 0.1
+    transformer_activation: relu
+
+init_logit_scale: 1.0
+
+optimizer_kwargs:
+    lr: 1e-4
+    betas:
+        - 0.9
+        - 0.999
+    weight_decay: 1e-5
+
+scheduler_kwargs:
+    

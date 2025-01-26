@@ -157,7 +157,7 @@ if __name__ == '__main__':
     model = LitEggEncoder(
         EEGEncoder(**config.eeg_kwargs),
         nn.Parameter(torch.FloatTensor([config.init_logit_scale])),
-        config.optimizer_kwargs
+        config
     )
     trainer = L.Trainer(
         logger=logger,

@@ -18,7 +18,7 @@ class EegImgLatentDataset(Dataset):
         super().__init__()
 
         # img latents can be loaded fully
-        self._img_latents: torch.Tensor = torch.load(img_latent_path)
+        self._img_latents: torch.Tensor = torch.load(img_latent_path)["img_features"]
 
         # load eeg's using mmap (not fully in RAM)
         self._eegs = [np.load(eeg_path, mmap_mode='r') for eeg_path in eeg_paths.values()]
@@ -122,9 +122,9 @@ def eeg_img_latent_collate(batch_list: list) -> torch.Tensor:
 def parse_subs_eeg_dir(subs_dir: Path):
     subs = {}
 
-    for sub_dir in subs_dir.glob("subs-*"):
+    for sub_dir in subs_dir.glob("sub-*"):
         sub_num = int(
-            re.match("subs-(?P<sub_num>\d*)", sub_dir.stem).groupdict()["sub_num"]
+            re.match("sub-(?P<sub_num>\d*)", sub_dir.stem).groupdict()["sub_num"]
         )
         train_file = next(sub_dir.glob("*train*"))
         test_file = next(sub_dir.glob("*test*"))
@@ -132,5 +132,3 @@ def parse_subs_eeg_dir(subs_dir: Path):
         subs[sub_num] = {"train": train_file, "test": test_file}
 
     return subs
-
-

@@ -18,7 +18,7 @@ class EegImgLatentDataset(Dataset):
         super().__init__()
 
         # img latents can be loaded fully
-        self._img_latents: torch.Tensor = torch.load(img_latent_path)["img_features"]
+        self._img_latents: torch.Tensor = torch.load(img_latent_path, weights_only=True)["img_features"]
 
         # load eeg's using mmap (not fully in RAM)
         self._eegs = [

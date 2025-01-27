@@ -1,12 +1,4 @@
-# almost everything is copied from improved-dataloader.yaml
-
 wandb_api_key:  # change it for your own at https://wandb.ai/settings#api
-resume_from_checkpoint: latest
-gradient_accumulation_steps: 1
-mixed_precision: bf16
-max_train_epochs: 100000
-max_train_steps: 100000
-checkpointing_steps: 1000
 
 experiment_name: Sole EEG contrastive
 output_dir: 
@@ -15,10 +7,10 @@ img_latent_train_path: img_latents/ViT-H-14_features_train.pt
 img_latent_test_path: img_latents/ViT-H-14_features_test.pt
 subs_dir_path: subs
 
-max_epochs: 1
+max_epochs: 2
 accelerator: "cpu"
-num_devices: 2
-batch_size: 5
+num_devices: 1
+batch_size: 10
 
 num_subjects: 1
 
@@ -44,5 +36,4 @@ optimizer_kwargs:
     weight_decay: 1e-5
 
 scheduler_kwargs:
-    
     

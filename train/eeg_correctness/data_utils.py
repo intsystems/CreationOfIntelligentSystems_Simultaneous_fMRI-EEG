@@ -21,7 +21,9 @@ class EegImgLatentDataset(Dataset):
         self._img_latents: torch.Tensor = torch.load(img_latent_path)["img_features"]
 
         # load eeg's using mmap (not fully in RAM)
-        self._eegs = [np.load(eeg_path, mmap_mode='r') for eeg_path in eeg_paths.values()]
+        self._eegs = [
+            np.load(eeg_path, mmap_mode='r') for eeg_path in eeg_paths.values()
+        ]
         # save participants' ids
         self._participants = list(eeg_paths.keys())
 
@@ -41,8 +43,8 @@ class EegImgLatentDataset(Dataset):
         """
         partic_num = indx // self._eegs_per_partic
         eeg_num = indx % self._eegs_per_partic
-        img_num = eeg_num // self._eeg_set_shape[0]
-        trial_num = eeg_num % self._eeg_set_shape[0]
+        img_num = eeg_num // self._eeg_set_shape[1]
+        trial_num = eeg_num % self._eeg_set_shape[1]
 
         return (
             self._participants[partic_num],
@@ -92,11 +94,11 @@ class DistributedClipSampler(DistributedSampler, ClipSampler):
     """ distributed version of the ClipSampler
     """
     def __init__(self, dataset, num_replicas = None, rank = None, shuffle = True, seed = 0, drop_last = False):
-        super(DistributedSampler).__init__(dataset, num_replicas, rank, shuffle, seed, drop_last)
-        super(ClipSampler).__init__(dataset)
+        DistributedSampler.__init__(self, dataset, num_replicas, rank, shuffle, seed, drop_last)
+        ClipSampler.__init__(self, dataset)
 
     def __len__(self):
-        return super(ClipSampler).__len__()
+        return ClipSampler.__len__(self)
 
     def __iter__(self):
         all_indxs = self._get_random_grouped_indxs()
@@ -124,7 +126,7 @@ def parse_subs_eeg_dir(subs_dir: Path):
 
     for sub_dir in subs_dir.glob("sub-*"):
         sub_num = int(
-            re.match("sub-(?P<sub_num>\d*)", sub_dir.stem).groupdict()["sub_num"]
+            re.match(r"sub-(?P<sub_num>\d*)", sub_dir.stem).groupdict()["sub_num"]
         )
         train_file = next(sub_dir.glob("*train*"))
         test_file = next(sub_dir.glob("*test*"))

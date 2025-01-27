@@ -3,16 +3,16 @@ wandb_api_key:  # change it for your own at https://wandb.ai/settings#api
 experiment_name: Sole EEG contrastive
 output_dir: 
 
-img_latent_train_path: img_latents/ViT-H-14_features_train.pt
-img_latent_test_path: img_latents/ViT-H-14_features_test.pt
-subs_dir_path: subs
+img_latent_train_path: data/ViT-H-14_features_train.pt
+img_latent_test_path: data/ViT-H-14_features_test.pt
+subs_dir_path: data/Preprocessed_data_250Hz
 
-max_epochs: 2
+max_epochs: 1
 accelerator: "cpu"
-num_devices: 1
-batch_size: 10
+num_devices: 6
+batch_size: 50
 
-num_subjects: 1
+num_subjects: 5
 
 eeg_kwargs:
     input_length: 250

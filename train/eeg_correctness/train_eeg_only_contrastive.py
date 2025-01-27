@@ -208,7 +208,7 @@ if __name__ == '__main__':
     logger = WandbLogger(
         project=config.experiment_name,
         log_model=True,
-        mode="disabled"
+        # mode="disabled"
     )
 
     # create subject's embeddings

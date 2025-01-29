@@ -22,6 +22,10 @@ from lightning.pytorch.loggers import WandbLogger
 
 import wandb
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*The given NumPy array is not writable")
+warnings.filterwarnings("ignore", module="lightning", message="The .* does not have many workers")
+
 
 def contrastive_loss(image_features, brain_features, logit_scale) -> dict:
     # Normalize features
@@ -71,7 +75,7 @@ class LitEggEncoder(L.LightningModule):
 
         loss, logits_per_brain = contrastive_loss(img_latents, eeg_latents, self.logit_scale)
 
-        self.log("Train/CLIP_loss", loss.item(), prog_bar=True, on_step=True)
+        self.log("Train/CLIP_loss", loss, prog_bar=True, on_step=True, logger=True, sync_dist=True)
 
         return loss
     
@@ -208,7 +212,7 @@ if __name__ == '__main__':
     logger = WandbLogger(
         project=config.experiment_name,
         log_model=True,
-        # mode="disabled"
+        mode="disabled"
     )
 
     # create subject's embeddings
@@ -227,7 +231,10 @@ if __name__ == '__main__':
         use_distributed_sampler=False,
         accelerator=config.accelerator,
         devices=config.num_devices,
-        max_epochs=config.max_epochs
+        max_epochs=config.max_epochs,
+        limit_train_batches=80,
+        limit_val_batches=80,
+        log_every_n_steps=15
     )
 
     trainer.fit(model)

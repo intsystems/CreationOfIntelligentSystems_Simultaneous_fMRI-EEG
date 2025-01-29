@@ -107,10 +107,10 @@ class DistributedClipSampler(DistributedSampler, ClipSampler):
     def __iter__(self):
         all_indxs = self._get_random_grouped_indxs()
 
-        chunk_start = (len(self) // self.num_replicas) * self.rank
+        chunk_start = (ClipSampler.__len__(self) // self.num_replicas) * self.rank
         chunk_end = min(
-            (len(self) // self.num_replicas) * (self.rank + 1),
-            len(self)
+            (ClipSampler.__len__(self) // self.num_replicas) * (self.rank + 1),
+            ClipSampler.__len__(self)
         )
 
         # flatten indicies array and return corresponding chunk

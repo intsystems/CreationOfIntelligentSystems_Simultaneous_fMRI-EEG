@@ -7,10 +7,10 @@ img_latent_train_path: data/ViT-H-14_features_train.pt
 img_latent_test_path: data/ViT-H-14_features_test.pt
 subs_dir_path: data/Preprocessed_data_250Hz
 
-max_epochs: 2
-accelerator: "cpu"
-num_devices: 2
-batch_size: 20
+max_epochs: 3
+accelerator: "gpu"
+num_devices: 1
+batch_size: 40
 
 num_subjects: 5
 
@@ -20,9 +20,9 @@ eeg_kwargs:
     output_dim: 1024 # = fmri_kwargs.embed_dim = fuser_kwargs.emb_dim
     conv_output_dim: 1440    # should be calculated manually
     conv_kernal_size: 50    # no impact
-    transformer_num_layers: 1
-    transformer_dim_feedforward: 2048
-    transformer_nhead: 1
+    transformer_num_layers: 10
+    transformer_dim_feedforward: 1024
+    transformer_nhead: 5
     transformer_dropout: 0.1
     transformer_activation: relu
 

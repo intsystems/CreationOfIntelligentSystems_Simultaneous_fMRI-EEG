@@ -97,10 +97,10 @@ class LitEggEncoder(L.LightningModule):
         prob_per_brain: torch.Tensor = torch.softmax(logits_per_brain, dim=1)
 
         self.batch_p_true_mean_metric.update(
-            torch.gather(prob_per_brain, dim=0, index=torch.arange(logits_per_brain.shape[0]).reshape(1, -1))
+            torch.gather(prob_per_brain, dim=0, index=torch.arange(logits_per_brain.shape[0]).reshape(1, -1).to(device=logits_per_brain.device))
         )
         self.batch_p_true_mean_sq_metric.update(
-            torch.gather(prob_per_brain, dim=0, index=torch.arange(logits_per_brain.shape[0]).reshape(1, -1)) ** 2
+            torch.gather(prob_per_brain, dim=0, index=torch.arange(logits_per_brain.shape[0]).reshape(1, -1).to(device=logits_per_brain.device)) ** 2
         )
 
         self.batch_entropy_mean_metric.update(
@@ -211,8 +211,8 @@ if __name__ == '__main__':
     # debug: disabled mode on
     logger = WandbLogger(
         project=config.experiment_name,
-        log_model=True,
-        mode="disabled"
+        log_model="all",
+        # mode="disabled"
     )
 
     # create subject's embeddings
@@ -232,9 +232,7 @@ if __name__ == '__main__':
         accelerator=config.accelerator,
         devices=config.num_devices,
         max_epochs=config.max_epochs,
-        limit_train_batches=80,
-        limit_val_batches=80,
-        log_every_n_steps=15
+        log_every_n_steps=70,
     )
 
-    trainer.fit(model)
+    trainer.fit(model, ckpt_path="Sole EEG contrastive/w4mtrbmo/checkpoints/epoch=0-step=3308.ckpt")

@@ -36,7 +36,7 @@ if __name__ == '__main__':
     for sub, paths in tqdm(sub_num2paths.items()):
         sub_num2masks[sub] = torch.stack([get_thresholded_change_mask(torch.tensor(nib.load(path).get_fdata())) for path in paths])
     
-    directory_path = 'natview/fmri_masks'
+    directory_path = 'natview/data/fmri_masks'
     # Create the directory and any necessary parent directories
     os.makedirs(directory_path, exist_ok=True)
 

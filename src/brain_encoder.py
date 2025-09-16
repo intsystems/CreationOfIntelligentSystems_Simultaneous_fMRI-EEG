@@ -5,6 +5,7 @@ import numpy as np
 from eeg_fmri_fuser import EegFmriWeightFuser, EegFmriMlpFuser
 from eeg_encoder import EEGEncoder
 from fmri_encoder import fMRIEncoder, RidgeRegression
+from eeg_encoder import TinyEEGEncoder # try exps (new from Dorin)
 
 
 class BaseBrainEncoder(nn.Module):
@@ -89,7 +90,7 @@ class BrainEncoder(BaseBrainEncoder):
         self.RidgeRegression = RidgeRegression(**ridge_kwargs)
         self.fMRIEncoder = fMRIEncoder(**fmri_kwargs)
 
-        self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
+        self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs["input_length"])
         self.EEGEncoder = EEGEncoder(
             participants_embedding=self.eeg_participants_embedding,
             **eeg_kwargs
@@ -231,8 +232,13 @@ class EEGBrainEncoder(BaseBrainEncoder):
         """
         super().__init__()
 
-        self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
-        self.EEGEncoder = EEGEncoder(
+        # self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs.input_length)
+        # self.EEGEncoder = EEGEncoder(
+        #     participants_embedding=self.eeg_participants_embedding,
+        #     **eeg_kwargs
+        # )
+        self.eeg_participants_embedding = nn.Embedding(num_subs, eeg_kwargs["input_length"])
+        self.EEGEncoder = TinyEEGEncoder(
             participants_embedding=self.eeg_participants_embedding,
             **eeg_kwargs
         )

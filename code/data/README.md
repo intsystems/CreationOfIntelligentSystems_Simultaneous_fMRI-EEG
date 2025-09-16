@@ -76,3 +76,4 @@ conda activate visual_stimuli
     }
     ```
 4. When the `dataset.json` file was created, you can initialize the custom `Dataset`, inherited from the `torch.utils.data.Dataset`, and then loop over the corresponding `DataLoader`. To do it, run the cells in the `dataset.ipynb` notebook.
+5. To get brain masks for fMRI data, start `get_fmri_masks.py` after `data_labeling.py`.

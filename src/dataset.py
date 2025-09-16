@@ -104,8 +104,8 @@ class BrainStimuliDataset(Dataset):
         drop_eeg: bool = False
     ):
         # sub id
-        _, sep, after = data['nifti_path'].partition('natview')
-        id = int((sep + after).split('/')[2].split('-')[1]) - 1
+        _, sep, after = data['nifti_path'].partition('data_indi_preproc')
+        id = int((sep + after).split('/')[1].split('-')[1]) - 1
         # fmri
         if not drop_fmri:
             nii_img = nib.load(data['nifti_path'])

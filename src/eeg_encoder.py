@@ -1,10 +1,7 @@
 from typing import Union, Callable, Optional
-import math
 
-import numpy as np
 import torch
 from torch import nn
-import torch.nn.functional as F
 
 
 class SpatioChannelConv(nn.Module):
@@ -170,101 +167,77 @@ class EEGEncoder(nn.Module):
 
 # ------------------------------- EEG Net encoder ----------------------------------------
 
-class EEGNet(nn.Module):
+class TinyEEGEncoder(nn.Module):
     def __init__(
-            self,
-            input_length: int,
-            num_channels: int,
-            output_dim: int,
-            time_kernal_size: int = 64
+        self,
+        input_length: int,
+        num_channels: int,
+        output_dim: int = 1024,
+        time_kernel_size: int = 32,
+        participants_embedding: nn.Embedding = None,
+        dropout: float = 0.1,
     ):
         super().__init__()
-
-        self.freq_filter_bank = nn.Conv2d(1, output_dim, kernel_size=(1, time_kernal_size))
-        self.depthwise_spatial = nn.Conv2d(output_dim, output_dim, kernel_size=(num_channels, 1), groups=output_dim)
-        # second time convolution fully wrap time dimension
-        final_time_kernel_size = input_length - time_kernal_size + 1
-        self.depthwise_freq_filter_bank = nn.Conv2d(output_dim, output_dim, kernel_size=(1, final_time_kernel_size), groups=output_dim)
-        # final 1x1 conv along all filters
-        self.mixture_conv = nn.Conv2d(output_dim, output_dim, kernel_size=(1, 1))
-
-        self.transform = nn.Sequential(
-            self.freq_filter_bank,
-            self.depthwise_spatial,
-            self.depthwise_freq_filter_bank,
-            self.mixture_conv,
-            nn.Flatten(start_dim=1)
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # add filter dimension to EEG
-        x.unsqueeze_(1)
-
-        return self.transform(x)
-
-
-class ConvEEGEncoder(nn.Module):
-    """ Encoder = EEG Net + Residual MLP
-    """
-    def __init__(
-            self,
-            input_length: int,
-            num_channels: int,
-            output_dim: int = 1024,
-            participants_embedding: nn.Embedding = None,
-            eeg_net_output_dim: int = 2048,
-            eeg_net_time_kernal: int = 64
-    ):
-        super().__init__()
-
         self.input_length = input_length
         self.num_channels = num_channels
+        self.output_dim = output_dim
+        self.time_kernel_size = time_kernel_size
         self.participants_embedding = participants_embedding
 
-        # num_channels is increased due to participant's token
-        self.eeg_net = EEGNet(input_length, num_channels + 1, eeg_net_output_dim, eeg_net_time_kernal)
+        # Convolutional block with three layers
+        self.conv_block = nn.Sequential(
+            # First convolution: 1 input channel --> 256 filters (temporal convolution)
+            nn.Conv2d(1, 256, kernel_size=(1, time_kernel_size), padding='same'),
+            nn.BatchNorm2d(256),
+            nn.ELU(),
+            nn.Dropout(dropout),
 
-        self.projector = ResidualMlpProjector(
-            eeg_net_output_dim,
-            output_dim
+            # Second convolution: 256 --> 512 filters (spatial convolution across channels + participant embedding)
+            nn.Conv2d(256, 512, kernel_size=(num_channels + 1, 1)),
+            nn.BatchNorm2d(512),
+            nn.ELU(),
+            nn.Dropout(dropout),
+
+            # Third convolution: 512 --> output_dim filters (full temporal coverage)
+            nn.Conv2d(512, output_dim, kernel_size=(1, input_length)),
+            nn.BatchNorm2d(output_dim),
+            nn.ELU(),
+            nn.Dropout(dropout),
         )
 
-    def forward(self, x: torch.Tensor, participant_id: Optional[torch.Tensor] = None) -> torch.Tensor:
-        """ Computes vector embeddings of the EEG signals.
+        # Projector: output_dim --> output_dim * 2 --> output_dim
+        self.projector = nn.Sequential(
+            nn.Linear(output_dim, output_dim * 2),
+            nn.GELU(),
+            nn.Linear(output_dim * 2, output_dim),
+            nn.LayerNorm(output_dim),
+        )
 
-        Args:
-            x (torch.Tensor): eeg input with shape (batch_size, num_channels, input_length)
-            participant_id (Optional[torch.Tensor], optional): participant's ids with shape 
-                (batch_size). See class description for more details. Defaults to None.
-
-        Returns:
-            torch.Tensor: embeding vectors with shape (batch_size, output_dim)
-        """
+    def forward(self, x: torch.Tensor, participant_id: torch.Tensor = None) -> torch.Tensor:
         batch_size = x.shape[0]
 
-        # if we have participant's embeddings then add them as the first token to the EEG channels
+        # Add participant embedding as an additional channel
         if self.participants_embedding is not None:
-            # use participant's embeddings or mean embedding otherwise
             if participant_id is not None:
                 participant_emb = self.participants_embedding(participant_id).unsqueeze(1)
             else:
-                participant_emb = self.participants_embedding.weight.mean(
-                    dim=0
-                ).expand(
-                    batch_size,
-                    1,
-                    self.input_length
-                )
+                participant_emb = self.participants_embedding.weight.mean(dim=0).expand(batch_size, 1, self.input_length)
         else:
-            # dummy participant's token if not provided
             participant_emb = torch.zeros((batch_size, 1, self.input_length), device=x.device)
 
-        x = torch.concat(
-                [participant_emb, x],
-                dim=1
-            )
+        # Concatenate participant embedding with EEG data
+        x = torch.concat([participant_emb, x], dim=1)
 
-        x = self.eeg_net(x)
+        # Add filter dimension: (batch_size, 1, num_channels + 1, input_length)
+        x = x.unsqueeze(1)
+
+        # Apply convolutional block
+        x = self.conv_block(x)
+
+        # Squeeze to remove time and channel dimensions
+        x = x.squeeze(dim=[2, 3])
+
+        # Project to output embedding space
         x = self.projector(x)
 
         return x

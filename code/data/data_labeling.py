@@ -53,7 +53,7 @@ if __name__ == '__main__':
     main_root = os.getcwd()
     root = 'natview/data'
     stimuli_dir = os.path.join(root, 'stimuli')
-    filtered_paths = glob.glob(os.path.join(root, '*/*/func/*/func_preproc/func_pp_filter_gsr_sm0.mni152.3mm.nii.gz'))
+    filtered_paths = glob.glob(os.path.join(root, 'projects', 'EEG_FMRI', 'data_indi_preproc', '*/*/func/*/func_preproc/func_pp_filter_gsr_sm0.mni152.3mm.nii.gz'))
     # filtered_paths = glob.glob(os.path.join(root, '*/*/func/*/func_preproc/func_pp_filter_sm0.mni152.3mm.nii.gz'))
     videoname2key = {
         'Despicable Me (English)': 'dme',

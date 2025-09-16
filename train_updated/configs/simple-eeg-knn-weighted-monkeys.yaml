@@ -1,0 +1,49 @@
+# Logging
+log_with: "tensorboard"
+tensorboard_log_dir: "/home/jovyan/shares/SR008.fs2/nkiselev/sandbox/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train_updated/logs"
+device: "cuda:0"
+
+# Experiment settings
+experiment_name: "Simultaneous_fMRI-EEG"
+output_dir: "/home/jovyan/shares/SR008.fs2/nkiselev/sandbox/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/train_updated/checkpoints/simple-eeg-knn-weighted-monkeys"
+
+# Training settings
+resume_from_checkpoint: "latest"
+gradient_accumulation_steps: 1
+mixed_precision: "bf16"
+max_train_epochs: 100000
+max_train_steps: 100000
+checkpointing_steps: 1000
+
+# Model settings
+mode: "eeg"
+model_kwargs:
+  eeg_kwargs:
+    input_length: 525
+    num_channels: 61
+    output_dim: 1024
+    time_kernel_size: 32
+    dropout: 0.1
+
+# Data settings
+dataloader_kwargs:
+    dataset:
+        json_path: "/home/jovyan/shares/SR008.fs2/nkiselev/sandbox/visual_stimuli_reconstruction/CreationOfIntelligentSystems_Simultaneous_fMRI-EEG/code/data/dataset.json"
+        recovery_mode: "kNN_weighted"
+        featured_videos: 
+            - monkey1
+            - monkey2
+            - monkey5
+    dataloader:
+        batch_size: 256
+
+# Optimization settings
+optimizer_kwargs:
+  lr: 3e-4
+  betas: [0.9, 0.999]
+  weight_decay: 1e-5
+
+# Scheduler settings
+scheduler_kwargs:
+  name: "constant"
+  warmup_steps: 1000

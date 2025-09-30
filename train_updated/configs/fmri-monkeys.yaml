@@ -41,6 +41,8 @@ dataloader_kwargs:
             - monkey1
             - monkey2
             - monkey5
+            # - dme
+            # - inscapes
     dataloader:
         batch_size: 8
 
